@@ -11,6 +11,15 @@ import { useDashboardData } from '../features/dashboard/use-dashboard-data'
 import type { SymbolFilter, TimeWindow } from '../features/dashboard/types'
 import type { Alert } from '../lib/types'
 
+type DashboardStackTab = 'market' | 'signals' | 'alerts' | 'headlines'
+
+const STACK_TABS: Array<{ value: DashboardStackTab; label: string; description: string }> = [
+  { value: 'market', label: 'Market', description: 'Price trajectory with anomaly overlays' },
+  { value: 'signals', label: 'Signals', description: 'EWMA return and volatility z-score behavior' },
+  { value: 'alerts', label: 'Alerts', description: 'Realtime anomaly stream' },
+  { value: 'headlines', label: 'Headlines', description: 'Source, freshness and sentiment' },
+]
+
 function getAlertKey(alert: Alert): string {
   return `${alert.time}|${alert.symbol}|${alert.window}|${alert.direction}`
 }
@@ -19,8 +28,11 @@ export function DashboardPage() {
   const [symbolFilter, setSymbolFilter] = useState<SymbolFilter>('both')
   const [window, setWindow] = useState<TimeWindow>(30)
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null)
+  const [activeStackTab, setActiveStackTab] = useState<DashboardStackTab>('market')
 
   const dashboard = useDashboardData({ symbolFilter, window })
+  const activeStackIndex = STACK_TABS.findIndex((tab) => tab.value === activeStackTab)
+  const activeStack = STACK_TABS[activeStackIndex] ?? STACK_TABS[0]
 
   const selectedAlertKey = useMemo(
     () => (selectedAlert ? getAlertKey(selectedAlert) : null),
@@ -47,23 +59,7 @@ export function DashboardPage() {
       />
 
       <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-8">
-          <header className="mb-3 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-900">Market Overview</h2>
-              <p className="text-xs text-slate-500">Price trajectory with anomaly overlays</p>
-            </div>
-            <p className="text-xs text-slate-500">window {window}m</p>
-          </header>
-          <MarketOverviewChart
-            priceSeriesBySymbol={dashboard.priceSeriesBySymbol}
-            alertOverlay={dashboard.alertOverlay}
-            selectedSymbols={dashboard.selectedSymbols}
-            window={window}
-          />
-        </article>
-
-        <div className="lg:col-span-4">
+        <div className="space-y-4 lg:col-span-4 lg:order-2">
           <LiveStatusRail
             healthState={dashboard.healthState}
             healthAgeSec={dashboard.healthAgeSec}
@@ -73,42 +69,94 @@ export function DashboardPage() {
             lastPriceUpdate={dashboard.prices.lastUpdatedAt}
             lastMetricUpdate={dashboard.metrics.lastUpdatedAt}
           />
-        </div>
-
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-8">
-          <header className="mb-3">
-            <h2 className="text-sm font-semibold text-slate-900">Signal Trends</h2>
-            <p className="text-xs text-slate-500">EWMA return and volatility z-score behavior</p>
-          </header>
-          <SignalTrendChart
-            metricSeriesBySymbol={dashboard.metricSeriesBySymbol}
-            selectedSymbols={dashboard.selectedSymbols}
-          />
-        </article>
-
-        <div className="lg:col-span-4">
           <KPIStack items={dashboard.marketStatus} />
         </div>
 
-        <div className="order-1 lg:order-none lg:col-span-6">
-          <AlertsRail
-            items={dashboard.alerts.items}
-            isLoading={dashboard.alerts.isLoading}
-            isError={dashboard.alerts.isError}
-            errorMessage={dashboard.alerts.errorMessage}
-            selectedAlertKey={selectedAlertKey}
-            onSelectAlert={setSelectedAlert}
-          />
-        </div>
+        <section className="lg:col-span-8 lg:order-1">
+          <header className="mb-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">{activeStack.label}</h2>
+              <p className="text-xs text-slate-500">{activeStack.description}</p>
+            </div>
+            <div className="flex rounded-full border border-slate-200 bg-slate-50 p-1" role="tablist" aria-label="Dashboard stack">
+              {STACK_TABS.map((tab) => {
+                const active = activeStackTab === tab.value
+                return (
+                  <button
+                    key={tab.value}
+                    aria-selected={active}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                    onClick={() => setActiveStackTab(tab.value)}
+                    role="tab"
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+          </header>
 
-        <div className="order-2 lg:order-none lg:col-span-6">
-          <HeadlinesRail
-            items={dashboard.headlines.items}
-            isLoading={dashboard.headlines.isLoading}
-            isError={dashboard.headlines.isError}
-            errorMessage={dashboard.headlines.errorMessage}
-          />
-        </div>
+          <div className="overflow-hidden">
+            <div
+              className="flex transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${activeStackIndex * 100}%)` }}
+            >
+              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'market'}>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <header className="mb-3 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-sm font-semibold text-slate-900">Market Overview</h2>
+                      <p className="text-xs text-slate-500">Price trajectory with anomaly overlays</p>
+                    </div>
+                    <p className="text-xs text-slate-500">window {window}m</p>
+                  </header>
+                  <MarketOverviewChart
+                    priceSeriesBySymbol={dashboard.priceSeriesBySymbol}
+                    alertOverlay={dashboard.alertOverlay}
+                    selectedSymbols={dashboard.selectedSymbols}
+                    window={window}
+                  />
+                </article>
+              </div>
+
+              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'signals'}>
+                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <header className="mb-3">
+                    <h2 className="text-sm font-semibold text-slate-900">Signal Trends</h2>
+                    <p className="text-xs text-slate-500">EWMA return and volatility z-score behavior</p>
+                  </header>
+                  <SignalTrendChart
+                    metricSeriesBySymbol={dashboard.metricSeriesBySymbol}
+                    selectedSymbols={dashboard.selectedSymbols}
+                  />
+                </article>
+              </div>
+
+              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'alerts'}>
+                <AlertsRail
+                  items={dashboard.alerts.items}
+                  isLoading={dashboard.alerts.isLoading}
+                  isError={dashboard.alerts.isError}
+                  errorMessage={dashboard.alerts.errorMessage}
+                  selectedAlertKey={selectedAlertKey}
+                  onSelectAlert={setSelectedAlert}
+                />
+              </div>
+
+              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'headlines'}>
+                <HeadlinesRail
+                  items={dashboard.headlines.items}
+                  isLoading={dashboard.headlines.isLoading}
+                  isError={dashboard.headlines.isError}
+                  errorMessage={dashboard.headlines.errorMessage}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   )
