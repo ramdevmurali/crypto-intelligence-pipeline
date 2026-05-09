@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { getAlerts } from '../../lib/api'
+import { useLiveListQuery } from '../../lib/hooks/use-live-list-query'
 import { subscribeAlertsStream } from '../../lib/sse'
 import type { Alert } from '../../lib/types'
 
@@ -53,41 +53,13 @@ function normalizeAlerts(items: Alert[], limit: number): Alert[] {
 export function useAlerts(options: UseAlertsOptions = {}): UseAlertsResult {
   const limit = options.limit ?? DEFAULT_LIMIT
   const queryKey = useMemo(() => ['alerts', { limit }] as const, [limit])
-  const queryClient = useQueryClient()
-  const [isLive, setIsLive] = useState(false)
-  const [lastEventAt, setLastEventAt] = useState<Date | null>(null)
 
-  const query = useQuery<Alert[], Error>({
+  return useLiveListQuery<Alert>({
     queryKey,
-    queryFn: async () => normalizeAlerts(await getAlerts({ limit }), limit),
+    limit,
+    interval: options.interval,
+    fetchItems: getAlerts,
+    subscribe: subscribeAlertsStream,
+    normalizeItems: normalizeAlerts,
   })
-
-  useEffect(() => {
-    const unsubscribe = subscribeAlertsStream({
-      limit,
-      interval: options.interval,
-      onMessage: (payload) => {
-        queryClient.setQueryData<Alert[]>(queryKey, normalizeAlerts(payload.items, limit))
-        setIsLive(true)
-        setLastEventAt(new Date())
-      },
-      onError: () => {
-        setIsLive(false)
-      },
-    })
-
-    return unsubscribe
-  }, [limit, options.interval, queryClient, queryKey])
-
-  return {
-    items: query.data ?? [],
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
-    refetch: () => {
-      void query.refetch()
-    },
-    isLive,
-    lastEventAt,
-  }
 }

@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { getHeadlines } from '../../lib/api'
+import { useLiveListQuery } from '../../lib/hooks/use-live-list-query'
 import { subscribeHeadlinesStream } from '../../lib/sse'
 import type { Headline } from '../../lib/types'
 
@@ -52,41 +52,13 @@ function normalizeHeadlines(items: Headline[], limit: number): Headline[] {
 export function useHeadlines(options: UseHeadlinesOptions = {}): UseHeadlinesResult {
   const limit = options.limit ?? DEFAULT_LIMIT
   const queryKey = useMemo(() => ['headlines', { limit }] as const, [limit])
-  const queryClient = useQueryClient()
-  const [isLive, setIsLive] = useState(false)
-  const [lastEventAt, setLastEventAt] = useState<Date | null>(null)
 
-  const query = useQuery<Headline[], Error>({
+  return useLiveListQuery<Headline>({
     queryKey,
-    queryFn: async () => normalizeHeadlines(await getHeadlines({ limit }), limit),
+    limit,
+    interval: options.interval,
+    fetchItems: getHeadlines,
+    subscribe: subscribeHeadlinesStream,
+    normalizeItems: normalizeHeadlines,
   })
-
-  useEffect(() => {
-    const unsubscribe = subscribeHeadlinesStream({
-      limit,
-      interval: options.interval,
-      onMessage: (payload) => {
-        queryClient.setQueryData<Headline[]>(queryKey, normalizeHeadlines(payload.items, limit))
-        setIsLive(true)
-        setLastEventAt(new Date())
-      },
-      onError: () => {
-        setIsLive(false)
-      },
-    })
-
-    return unsubscribe
-  }, [limit, options.interval, queryClient, queryKey])
-
-  return {
-    items: query.data ?? [],
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
-    refetch: () => {
-      void query.refetch()
-    },
-    isLive,
-    lastEventAt,
-  }
 }

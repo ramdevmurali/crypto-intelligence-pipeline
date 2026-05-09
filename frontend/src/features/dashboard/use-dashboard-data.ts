@@ -8,7 +8,6 @@ import type { Alert, Headline, LatestMetrics, PricePoint } from '../../lib/types
 import type {
   AlertOverlayPoint,
   DashboardHealthState,
-  HeadlineFreshnessPoint,
   MarketStatusCard,
   MetricSeriesPoint,
   MetricSnapshot,
@@ -28,8 +27,6 @@ type UseDashboardDataOptions = {
 }
 
 type UseDashboardDataResult = {
-  symbolFilter: SymbolFilter
-  window: TimeWindow
   selectedSymbols: SymbolKey[]
   healthState: DashboardHealthState
   healthAgeSec: number | null
@@ -37,7 +34,6 @@ type UseDashboardDataResult = {
   priceSeriesBySymbol: Record<SymbolKey, PriceSeriesPoint[]>
   metricSeriesBySymbol: Record<SymbolKey, MetricSeriesPoint[]>
   alertOverlay: AlertOverlayPoint[]
-  headlineFreshness: HeadlineFreshnessPoint[]
   alerts: {
     items: Alert[]
     isLoading: boolean
@@ -235,28 +231,6 @@ function buildAlertOverlay(
   return Array.from(deduped.values()).sort((a, b) => a.ts - b.ts)
 }
 
-function buildHeadlineFreshness(
-  headlines: Headline[],
-  window: TimeWindow,
-  nowMs: number
-): HeadlineFreshnessPoint[] {
-  const points: HeadlineFreshnessPoint[] = []
-
-  for (const headline of headlines) {
-    const ts = parseTs(headline.time)
-    if (ts <= 0) {
-      continue
-    }
-    points.push({
-      ts,
-      time: headline.time,
-      ageSec: Math.max(0, Math.floor((nowMs - ts) / 1000)),
-    })
-  }
-
-  return applyWindowFilter(points.sort((a, b) => a.ts - b.ts), window, nowMs)
-}
-
 function computeHealthState(
   args: {
     errors: number
@@ -400,11 +374,6 @@ export function useDashboardData(options: UseDashboardDataOptions): UseDashboard
     [alerts.items, priceSeriesBySymbol, selectedSymbols]
   )
 
-  const headlineFreshness = useMemo(
-    () => buildHeadlineFreshness(headlines.items, options.window, nowMs),
-    [headlines.items, nowMs, options.window]
-  )
-
   const latestMetricsMap = useMemo(
     () => latestMetricBySymbol(metrics.items, metricHistory),
     [metricHistory, metrics.items]
@@ -459,8 +428,6 @@ export function useDashboardData(options: UseDashboardDataOptions): UseDashboard
   }, [alerts.isError, alerts.isLive, headlines.isError, headlines.isLive, healthAgeSec, metrics.failedSymbols.length, metrics.isError, prices.isError])
 
   return {
-    symbolFilter: options.symbolFilter,
-    window: options.window,
     selectedSymbols,
     healthState,
     healthAgeSec,
@@ -468,7 +435,6 @@ export function useDashboardData(options: UseDashboardDataOptions): UseDashboard
     priceSeriesBySymbol,
     metricSeriesBySymbol,
     alertOverlay,
-    headlineFreshness,
     alerts: {
       items: alerts.items,
       isLoading: alerts.isLoading,

@@ -26,12 +26,6 @@ export type PriceSeriesPoint = {
   price: number
 }
 
-export type HeadlineFreshnessPoint = {
-  ts: number
-  time: string
-  ageSec: number
-}
-
 export type AlertOverlayPoint = {
   ts: number
   time: string
