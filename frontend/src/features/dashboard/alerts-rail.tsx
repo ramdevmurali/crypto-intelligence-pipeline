@@ -14,15 +14,11 @@ function alertKey(alert: Alert): string {
   return `${alert.time}|${alert.symbol}|${alert.window}|${alert.direction}`
 }
 
-function trimSummary(value: string | null): string {
+function formatSummary(value: string | null): string {
   if (!value) {
     return 'summarizing...'
   }
-  const text = value.trim().replace(/\s+/g, ' ')
-  if (text.length <= 96) {
-    return text
-  }
-  return `${text.slice(0, 96).trimEnd()}…`
+  return value.trim().replace(/\s+/g, ' ')
 }
 
 export function AlertsRail({
@@ -53,7 +49,7 @@ export function AlertsRail({
             return (
               <li
                 key={key}
-                className={`cursor-pointer rounded-xl border px-3 py-2 transition-colors ${
+                className={`cursor-pointer rounded-xl border px-3 py-3 transition-colors ${
                   selected
                     ? 'border-slate-900 bg-slate-900 text-white'
                     : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -76,7 +72,7 @@ export function AlertsRail({
                 <p className={`mt-1 text-xs ${selected ? 'text-slate-200' : 'text-slate-500'}`}>
                   return {(alert.return * 100).toFixed(2)}% · threshold {(alert.threshold * 100).toFixed(2)}%
                 </p>
-                <p className={`mt-1 text-sm ${selected ? 'text-white' : 'text-slate-700'}`}>{trimSummary(alert.summary)}</p>
+                <p className={`mt-2 text-sm leading-6 ${selected ? 'text-white' : 'text-slate-700'}`}>{formatSummary(alert.summary)}</p>
               </li>
             )
           })}
