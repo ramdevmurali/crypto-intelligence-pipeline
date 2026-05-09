@@ -7,7 +7,6 @@ import { usePrices } from '../prices/use-prices'
 import type { Alert, Headline, LatestMetrics, PricePoint } from '../../lib/types'
 import type {
   AlertOverlayPoint,
-  DashboardHealthState,
   MarketStatusCard,
   MetricSeriesPoint,
   MetricSnapshot,
@@ -28,8 +27,6 @@ type UseDashboardDataOptions = {
 
 type UseDashboardDataResult = {
   selectedSymbols: SymbolKey[]
-  healthState: DashboardHealthState
-  healthAgeSec: number | null
   marketStatus: MarketStatusCard[]
   priceSeriesBySymbol: Record<SymbolKey, PriceSeriesPoint[]>
   metricSeriesBySymbol: Record<SymbolKey, MetricSeriesPoint[]>
@@ -104,10 +101,13 @@ function applyWindowFilter<T extends { ts: number }>(points: T[], window: TimeWi
   return points
 }
 
+function latestTs<T extends { ts: number }>(points: T[]): number {
+  return points.reduce((latest, point) => Math.max(latest, point.ts), 0)
+}
+
 function buildPriceSeries(
   items: PricePoint[],
-  window: TimeWindow,
-  nowMs: number
+  window: TimeWindow
 ): Record<SymbolKey, PriceSeriesPoint[]> {
   const grouped: Record<SymbolKey, PriceSeriesPoint[]> = {
     btcusdt: [],
@@ -131,11 +131,13 @@ function buildPriceSeries(
     })
   }
 
+  const referenceTs = Math.max(...SYMBOLS.map((symbol) => latestTs(grouped[symbol])))
+
   for (const symbol of SYMBOLS) {
     grouped[symbol] = applyWindowFilter(
       grouped[symbol].sort((a, b) => a.ts - b.ts),
       window,
-      nowMs
+      referenceTs
     )
   }
 
@@ -231,28 +233,6 @@ function buildAlertOverlay(
   return Array.from(deduped.values()).sort((a, b) => a.ts - b.ts)
 }
 
-function computeHealthState(
-  args: {
-    errors: number
-    hasPartialMetrics: boolean
-    streamsLive: boolean
-    healthAgeSec: number | null
-  }
-): DashboardHealthState {
-  const { errors, hasPartialMetrics, streamsLive, healthAgeSec } = args
-
-  if (healthAgeSec === null || healthAgeSec > 300) {
-    return 'stale'
-  }
-  if (errors === 0 && !hasPartialMetrics && streamsLive && healthAgeSec <= 90) {
-    return 'live'
-  }
-  if (errors >= 2 || (!streamsLive && healthAgeSec > 180)) {
-    return 'stale'
-  }
-  return 'degraded'
-}
-
 function latestMetricBySymbol(items: LatestMetrics[], history: Record<SymbolKey, MetricSeriesPoint[]>) {
   const map = new Map<SymbolKey, MetricSnapshot>()
 
@@ -283,14 +263,6 @@ function latestMetricBySymbol(items: LatestMetrics[], history: Record<SymbolKey,
 
 export function useDashboardData(options: UseDashboardDataOptions): UseDashboardDataResult {
   const selectedSymbols = useMemo(() => selectSymbols(options.symbolFilter), [options.symbolFilter])
-  const [nowMs, setNowMs] = useState(0)
-
-  useEffect(() => {
-    const tick = () => setNowMs(Date.now())
-    tick()
-    const timerId = window.setInterval(tick, 1000)
-    return () => window.clearInterval(timerId)
-  }, [])
 
   const prices = usePrices({
     symbols: SYMBOLS,
@@ -357,17 +329,18 @@ export function useDashboardData(options: UseDashboardDataOptions): UseDashboard
   }, [metrics.items])
 
   const priceSeriesBySymbol = useMemo(
-    () => buildPriceSeries(prices.items, options.window, nowMs),
-    [nowMs, options.window, prices.items]
+    () => buildPriceSeries(prices.items, options.window),
+    [options.window, prices.items]
   )
 
   const metricSeriesBySymbol = useMemo(() => {
+    const referenceTs = Math.max(latestTs(metricHistory.btcusdt), latestTs(metricHistory.ethusdt))
     const filtered: Record<SymbolKey, MetricSeriesPoint[]> = {
-      btcusdt: applyWindowFilter(metricHistory.btcusdt, options.window, nowMs),
-      ethusdt: applyWindowFilter(metricHistory.ethusdt, options.window, nowMs),
+      btcusdt: applyWindowFilter(metricHistory.btcusdt, options.window, referenceTs),
+      ethusdt: applyWindowFilter(metricHistory.ethusdt, options.window, referenceTs),
     }
     return filtered
-  }, [metricHistory, nowMs, options.window])
+  }, [metricHistory, options.window])
 
   const alertOverlay = useMemo(
     () => buildAlertOverlay(alerts.items, selectedSymbols, priceSeriesBySymbol),
@@ -396,41 +369,13 @@ export function useDashboardData(options: UseDashboardDataOptions): UseDashboard
         returnZ: latestMetric?.return_z_ewma_1m ?? null,
         volZ: latestMetric?.vol_z_1m ?? null,
         attention: latestMetric?.attention ?? null,
-        freshnessSec: newestTs > 0 ? Math.max(0, Math.floor((nowMs - newestTs) / 1000)) : null,
+        freshnessTs: newestTs > 0 ? newestTs : null,
       }
     })
-  }, [latestMetricsMap, nowMs, priceSeriesBySymbol])
-
-  const healthAgeSec = useMemo(() => {
-    const candidates = [
-      prices.lastUpdatedAt?.getTime() ?? 0,
-      metrics.lastUpdatedAt?.getTime() ?? 0,
-      alerts.lastEventAt?.getTime() ?? 0,
-      headlines.lastEventAt?.getTime() ?? 0,
-    ].filter((value) => value > 0)
-
-    if (candidates.length === 0) {
-      return null
-    }
-
-    const newest = Math.max(...candidates)
-    return Math.max(0, Math.floor((nowMs - newest) / 1000))
-  }, [alerts.lastEventAt, headlines.lastEventAt, metrics.lastUpdatedAt, nowMs, prices.lastUpdatedAt])
-
-  const healthState = useMemo(() => {
-    const errors = [prices.isError, metrics.isError, alerts.isError, headlines.isError].filter(Boolean).length
-    return computeHealthState({
-      errors,
-      hasPartialMetrics: metrics.failedSymbols.length > 0,
-      streamsLive: alerts.isLive && headlines.isLive,
-      healthAgeSec,
-    })
-  }, [alerts.isError, alerts.isLive, headlines.isError, headlines.isLive, healthAgeSec, metrics.failedSymbols.length, metrics.isError, prices.isError])
+  }, [latestMetricsMap, priceSeriesBySymbol])
 
   return {
     selectedSymbols,
-    healthState,
-    healthAgeSec,
     marketStatus,
     priceSeriesBySymbol,
     metricSeriesBySymbol,

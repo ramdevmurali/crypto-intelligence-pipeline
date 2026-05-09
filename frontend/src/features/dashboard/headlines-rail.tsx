@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import type { Headline } from '../../lib/types'
 import { formatIsoClock } from './ui-utils'
 
@@ -8,12 +10,12 @@ type HeadlinesRailProps = {
   errorMessage: string | null
 }
 
-function ageSec(value: string): number | null {
+function ageSec(value: string, nowMs: number): number | null {
   const ts = Date.parse(value)
   if (Number.isNaN(ts)) {
     return null
   }
-  return Math.max(0, Math.floor((Date.now() - ts) / 1000))
+  return Math.max(0, Math.floor((nowMs - ts) / 1000))
 }
 
 function freshnessClass(age: number | null): string {
@@ -34,6 +36,13 @@ function sentimentLabel(value: number | null): string {
 }
 
 export function HeadlinesRail({ items, isLoading, isError, errorMessage }: HeadlinesRailProps) {
+  const [nowMs, setNowMs] = useState(() => Date.now())
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNowMs(Date.now()), 1000)
+    return () => window.clearInterval(timerId)
+  }, [])
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <header className="mb-3">
@@ -48,7 +57,7 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
       {!isLoading && !isError && items.length > 0 && (
         <ul className="space-y-2">
           {items.slice(0, 8).map((headline) => {
-            const age = ageSec(headline.time)
+            const age = ageSec(headline.time, nowMs)
             return (
               <li key={`${headline.time}|${headline.url ?? headline.title}`} className="rounded-xl border border-slate-200 px-3 py-2">
                 <p className="truncate text-sm font-medium text-slate-800">{headline.title}</p>

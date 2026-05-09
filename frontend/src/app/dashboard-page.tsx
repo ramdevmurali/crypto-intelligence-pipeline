@@ -61,11 +61,15 @@ export function DashboardPage() {
       <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="space-y-4 lg:col-span-4 lg:order-2">
           <LiveStatusRail
-            healthState={dashboard.healthState}
-            healthAgeSec={dashboard.healthAgeSec}
             alertsLive={dashboard.alerts.isLive}
+            alertsError={dashboard.alerts.isError}
+            alertsLastEventAt={dashboard.alerts.lastEventAt}
             headlinesLive={dashboard.headlines.isLive}
+            headlinesError={dashboard.headlines.isError}
+            headlinesLastEventAt={dashboard.headlines.lastEventAt}
+            metricsError={dashboard.metrics.isError}
             metricsFailedSymbols={dashboard.metrics.failedSymbols}
+            pricesError={dashboard.prices.isError}
             lastPriceUpdate={dashboard.prices.lastUpdatedAt}
             lastMetricUpdate={dashboard.metrics.lastUpdatedAt}
           />

@@ -41,5 +41,5 @@ export type MarketStatusCard = {
   returnZ: number | null
   volZ: number | null
   attention: number | null
-  freshnessSec: number | null
+  freshnessTs: number | null
 }

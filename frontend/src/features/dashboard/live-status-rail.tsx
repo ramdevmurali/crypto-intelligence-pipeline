@@ -1,12 +1,18 @@
+import { useEffect, useMemo, useState } from 'react'
+
 import { getHealthChipClass } from './ui-utils'
 import type { DashboardHealthState } from './types'
 
 type LiveStatusRailProps = {
-  healthState: DashboardHealthState
-  healthAgeSec: number | null
   alertsLive: boolean
+  alertsError: boolean
+  alertsLastEventAt: Date | null
   headlinesLive: boolean
+  headlinesError: boolean
+  headlinesLastEventAt: Date | null
+  metricsError: boolean
   metricsFailedSymbols: string[]
+  pricesError: boolean
   lastPriceUpdate: Date | null
   lastMetricUpdate: Date | null
 }
@@ -22,15 +28,75 @@ function yesNo(value: boolean): string {
   return value ? 'yes' : 'no'
 }
 
-export function LiveStatusRail({
-  healthState,
+function ageSec(value: number, nowMs: number): number {
+  return Math.max(0, Math.floor((nowMs - value) / 1000))
+}
+
+function computeHealthState({
+  errors,
+  hasPartialMetrics,
+  streamsLive,
   healthAgeSec,
+}: {
+  errors: number
+  hasPartialMetrics: boolean
+  streamsLive: boolean
+  healthAgeSec: number | null
+}): DashboardHealthState {
+  if (healthAgeSec === null || healthAgeSec > 300) {
+    return 'stale'
+  }
+  if (errors === 0 && !hasPartialMetrics && streamsLive && healthAgeSec <= 90) {
+    return 'live'
+  }
+  if (errors >= 2 || (!streamsLive && healthAgeSec > 180)) {
+    return 'stale'
+  }
+  return 'degraded'
+}
+
+export function LiveStatusRail({
   alertsLive,
+  alertsError,
+  alertsLastEventAt,
   headlinesLive,
+  headlinesError,
+  headlinesLastEventAt,
+  metricsError,
   metricsFailedSymbols,
+  pricesError,
   lastPriceUpdate,
   lastMetricUpdate,
 }: LiveStatusRailProps) {
+  const [nowMs, setNowMs] = useState(() => Date.now())
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNowMs(Date.now()), 1000)
+    return () => window.clearInterval(timerId)
+  }, [])
+
+  const healthAgeSec = useMemo(() => {
+    const candidates = [
+      lastPriceUpdate?.getTime() ?? 0,
+      lastMetricUpdate?.getTime() ?? 0,
+      alertsLastEventAt?.getTime() ?? 0,
+      headlinesLastEventAt?.getTime() ?? 0,
+    ].filter((value) => value > 0)
+
+    if (candidates.length === 0) {
+      return null
+    }
+
+    return ageSec(Math.max(...candidates), nowMs)
+  }, [alertsLastEventAt, headlinesLastEventAt, lastMetricUpdate, lastPriceUpdate, nowMs])
+
+  const healthState = computeHealthState({
+    errors: [pricesError, metricsError, alertsError, headlinesError].filter(Boolean).length,
+    hasPartialMetrics: metricsFailedSymbols.length > 0,
+    streamsLive: alertsLive && headlinesLive,
+    healthAgeSec,
+  })
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <header className="mb-3 flex items-center justify-between">
