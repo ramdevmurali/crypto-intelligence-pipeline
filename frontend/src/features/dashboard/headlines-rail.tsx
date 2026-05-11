@@ -45,7 +45,7 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
 
   return (
     <section className="dashboard-card">
-      <header className="mb-3">
+      <header className="mb-2">
         <h2 className="dashboard-heading">Headlines</h2>
         <p className="dashboard-muted text-xs">Source, freshness and sentiment</p>
       </header>

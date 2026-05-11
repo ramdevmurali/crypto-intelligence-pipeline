@@ -24,7 +24,7 @@ export function KPIStack({ items }: KPIStackProps) {
 
   return (
     <section className="dashboard-card">
-      <header className="mb-3">
+      <header className="mb-2">
         <h2 className="dashboard-heading">KPI Stack</h2>
         <p className="dashboard-muted text-xs">Live per-symbol signal snapshot</p>
       </header>

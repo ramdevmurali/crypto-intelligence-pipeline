@@ -35,7 +35,7 @@ export function AlertsRail({
 }: AlertsRailProps) {
   return (
     <section className="dashboard-card">
-      <header className="mb-3">
+      <header className="mb-2">
         <h2 className="dashboard-heading">Alerts</h2>
         <p className="dashboard-muted text-xs">Realtime anomaly stream</p>
       </header>

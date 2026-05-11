@@ -47,7 +47,7 @@ body {
 
 @layer components {
   .app-frame {
-    @apply mx-auto min-h-screen w-full max-w-7xl px-4 py-7 sm:px-6 lg:px-8;
+    @apply mx-auto min-h-screen w-full max-w-7xl px-4 py-4 sm:px-5 lg:px-6;
   }
 
   .dashboard-console-header {
@@ -58,7 +58,7 @@ body {
       var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-soft);
-    @apply rounded-xl border px-4 py-4 sm:px-5;
+    @apply rounded-xl border px-4 py-3 sm:px-5;
   }
 
   .dashboard-console-header::before {
@@ -94,7 +94,7 @@ body {
     background: var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-soft);
-    @apply rounded-xl border p-4;
+    @apply rounded-xl border p-3;
   }
 
   .dashboard-card-compact {
@@ -112,7 +112,7 @@ body {
 
   .panel-row {
     border-color: color-mix(in srgb, var(--stroke) 74%, transparent);
-    @apply flex items-center justify-between gap-3 border-t py-2 first:border-t-0 first:pt-0 last:pb-0;
+    @apply flex items-center justify-between gap-3 border-t py-1.5 first:border-t-0 first:pt-0 last:pb-0;
   }
 
   .panel-value {
@@ -201,11 +201,11 @@ body {
   }
 
   .dashboard-shell-grid {
-    @apply mt-3 grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4;
+    @apply mt-2 grid grid-cols-1 gap-2 lg:grid-cols-12 lg:gap-3;
   }
 
   .dashboard-side-stack {
-    @apply space-y-3 lg:order-2 lg:col-span-4;
+    @apply space-y-2 lg:order-2 lg:col-span-4;
   }
 
   .dashboard-stack {
@@ -216,11 +216,11 @@ body {
     background: rgba(253, 254, 251, 0.82);
     border-color: var(--stroke);
     box-shadow: var(--shadow-tight);
-    @apply rounded-xl border px-3 py-2 backdrop-blur;
+    @apply rounded-xl border px-3 py-1.5 backdrop-blur;
   }
 
   .dashboard-controls {
-    @apply mt-3 flex flex-wrap items-center justify-between gap-2;
+    @apply mt-2 flex flex-wrap items-center justify-between gap-2;
   }
 
   .control-group {
@@ -272,6 +272,6 @@ body {
       var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-tight);
-    @apply mb-3 flex flex-col gap-3 rounded-xl border px-3 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between;
+    @apply mb-2 flex flex-col gap-2 rounded-xl border px-3 py-2 backdrop-blur sm:flex-row sm:items-center sm:justify-between;
   }
 }

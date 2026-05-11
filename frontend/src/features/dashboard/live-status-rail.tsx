@@ -110,7 +110,7 @@ export function LiveStatusRail({
 
   return (
     <section className="dashboard-card">
-      <header className="mb-3 flex items-center justify-between">
+      <header className="mb-2 flex items-center justify-between">
         <h2 className="dashboard-heading">Live Status</h2>
         <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getHealthChipClass(healthState)}`}>
           {healthState}

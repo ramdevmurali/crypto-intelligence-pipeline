@@ -145,7 +145,7 @@ function TrendMiniChart({
   return (
     <div className="dashboard-subcard p-3">
       <p className="dashboard-label">{title}</p>
-      <div className="mt-2 h-36 w-full">
+      <div className="mt-2 h-32 w-full">
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="var(--stroke)" strokeDasharray="2 6" vertical={false} />
@@ -206,7 +206,7 @@ function TrendMiniChart({
 
 export function SignalTrendChart({ metricSeriesBySymbol, selectedSymbols }: SignalTrendChartProps) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-2 md:grid-cols-2">
       <TrendMiniChart
         title="Return EWMA Z"
         field="return_z_ewma_1m"

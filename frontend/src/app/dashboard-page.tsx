@@ -43,7 +43,7 @@ export function DashboardPage() {
     <main className="app-frame">
       <header className="dashboard-console-header">
         <p className="dashboard-eyebrow">Realtime Crypto Narrato</p>
-        <div className="dashboard-console-copy mt-2">
+        <div className="dashboard-console-copy mt-1">
           <div>
             <h1 className="dashboard-title">Market Intelligence Dashboard</h1>
             <p className="dashboard-subtitle">Live prices, signal shifts, headline freshness, and anomaly context.</p>
@@ -108,7 +108,7 @@ export function DashboardPage() {
             >
               <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'market'}>
                 <article className="dashboard-card">
-                  <header className="mb-3 flex items-center justify-between">
+                  <header className="mb-2 flex items-center justify-between">
                     <div>
                       <h2 className="dashboard-heading">Market Overview</h2>
                       <p className="dashboard-muted text-xs">Price trajectory with anomaly overlays</p>
@@ -126,7 +126,7 @@ export function DashboardPage() {
 
               <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'signals'}>
                 <article className="dashboard-card">
-                  <header className="mb-3">
+                  <header className="mb-2">
                     <h2 className="dashboard-heading">Signal Trends</h2>
                     <p className="dashboard-muted text-xs">EWMA return and volatility z-score behavior</p>
                   </header>
