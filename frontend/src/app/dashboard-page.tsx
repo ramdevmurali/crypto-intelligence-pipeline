@@ -43,7 +43,7 @@ export function DashboardPage() {
     <main className="app-frame">
       <header className="dashboard-console-header">
         <p className="dashboard-eyebrow">Realtime Crypto Narrato</p>
-        <div className="dashboard-console-copy mt-1">
+        <div className="dashboard-console-copy mt-0.5">
           <div>
             <h1 className="dashboard-title">Market Intelligence Dashboard</h1>
             <p className="dashboard-subtitle">Live prices, signal shifts, headline freshness, and anomaly context.</p>

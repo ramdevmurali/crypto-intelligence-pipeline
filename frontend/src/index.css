@@ -58,7 +58,7 @@ body {
       var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-soft);
-    @apply rounded-xl border px-4 py-3 sm:px-5;
+    @apply rounded-xl border px-4 py-2.5 sm:px-5;
   }
 
   .dashboard-console-header::before {
@@ -72,7 +72,7 @@ body {
 
   .dashboard-console-copy {
     position: relative;
-    @apply flex flex-wrap items-end justify-between gap-3;
+    @apply flex flex-wrap items-end justify-between gap-2;
   }
 
   .dashboard-eyebrow {
@@ -82,12 +82,12 @@ body {
 
   .dashboard-title {
     color: var(--text);
-    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+    @apply text-xl font-semibold tracking-tight sm:text-2xl;
   }
 
   .dashboard-subtitle {
     color: var(--text-muted);
-    @apply mt-1 text-sm;
+    @apply mt-0.5 text-sm;
   }
 
   .dashboard-card {
