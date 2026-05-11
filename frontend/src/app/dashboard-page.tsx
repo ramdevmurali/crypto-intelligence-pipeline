@@ -108,7 +108,7 @@ export function DashboardPage() {
             >
               <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'market'}>
                 <article className="dashboard-card">
-                  <header className="mb-2 flex items-center justify-between">
+                  <header className="mb-1 flex items-center justify-between">
                     <div>
                       <h2 className="dashboard-heading">Market Overview</h2>
                       <p className="dashboard-muted text-xs">Price trajectory with anomaly overlays</p>

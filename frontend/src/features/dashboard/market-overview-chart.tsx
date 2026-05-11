@@ -291,7 +291,7 @@ export function MarketOverviewChart({
   }
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-56 w-full">
       <ResponsiveContainer>
         <ComposedChart data={data} margin={{ top: 10, right: 12, left: 8, bottom: 0 }}>
           <CartesianGrid stroke="var(--stroke)" strokeDasharray="2 6" vertical={false} />
