@@ -36,9 +36,22 @@ export function KPIStack({ items }: KPIStackProps) {
               <p className="dashboard-label">{symbolLabel(item.symbol)}</p>
               <p className="dashboard-muted text-xs">freshness {formatAge(item.freshnessTs, nowMs)}</p>
             </div>
-            <p className="text-lg font-semibold text-[color:var(--text)]">{formatPrice(item.price)}</p>
-            <p className="mt-1 text-xs text-[color:var(--text-soft)]">ret 1m {formatPct(item.return1m)} · z {formatNumber(item.returnZ)} · vol z {formatNumber(item.volZ)}</p>
-            <p className="dashboard-muted text-xs">attention {formatNumber(item.attention, 2)}</p>
+            <p className="text-xl font-semibold tabular-nums text-[color:var(--text)]">{formatPrice(item.price)}</p>
+            <div className="metric-strip">
+              <p className="metric-cell">
+                ret 1m
+                <strong>{formatPct(item.return1m)}</strong>
+              </p>
+              <p className="metric-cell">
+                z
+                <strong>{formatNumber(item.returnZ)}</strong>
+              </p>
+              <p className="metric-cell">
+                vol z
+                <strong>{formatNumber(item.volZ)}</strong>
+              </p>
+            </div>
+            <p className="dashboard-muted mt-2 text-xs">attention {formatNumber(item.attention, 2)}</p>
           </article>
         ))}
       </div>

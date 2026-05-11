@@ -110,6 +110,55 @@ body {
     @apply rounded-lg border;
   }
 
+  .panel-row {
+    border-color: color-mix(in srgb, var(--stroke) 74%, transparent);
+    @apply flex items-center justify-between gap-3 border-t py-2 first:border-t-0 first:pt-0 last:pb-0;
+  }
+
+  .panel-value {
+    color: var(--text);
+    @apply text-right text-sm font-semibold;
+  }
+
+  .metric-strip {
+    border-color: color-mix(in srgb, var(--stroke) 78%, transparent);
+    @apply mt-2 grid grid-cols-3 gap-2 border-t pt-2;
+  }
+
+  .metric-cell {
+    color: var(--text-muted);
+    @apply min-w-0 text-xs;
+  }
+
+  .metric-cell strong {
+    color: var(--text);
+    @apply mt-0.5 block truncate text-sm font-semibold;
+  }
+
+  .meta-pill {
+    background: rgba(255, 255, 255, 0.64);
+    border-color: var(--stroke);
+    color: var(--text-muted);
+    @apply rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+
+  .status-dot {
+    background: var(--stroke-strong);
+    @apply h-2 w-2 rounded-full;
+  }
+
+  .status-dot-live {
+    background: var(--accent);
+  }
+
+  .status-dot-warn {
+    background: var(--warn);
+  }
+
+  .status-dot-danger {
+    background: var(--danger);
+  }
+
   .dashboard-label {
     color: var(--text-muted);
     @apply text-xs font-semibold uppercase tracking-wide;

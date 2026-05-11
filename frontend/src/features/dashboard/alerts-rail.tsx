@@ -21,6 +21,10 @@ function formatSummary(value: string | null): string {
   return value.trim().replace(/\s+/g, ' ')
 }
 
+function metaClass(selected: boolean): string {
+  return selected ? 'rounded-full border border-white/20 px-2 py-0.5 text-xs font-medium text-white/75' : 'meta-pill'
+}
+
 export function AlertsRail({
   items,
   isLoading,
@@ -64,14 +68,17 @@ export function AlertsRail({
                 role="button"
                 tabIndex={0}
               >
-                <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide">
                   <span className={`h-2 w-2 rounded-full ${getDirectionDotClass(alert.direction)}`} />
-                  {alert.symbol} · {alert.window} · {alert.direction}
-                  <span className={`${selected ? 'text-white/70' : 'dashboard-muted'}`}>{freshness}</span>
-                </p>
-                <p className={`mt-1 text-xs ${selected ? 'text-white/70' : 'dashboard-muted'}`}>
-                  return {(alert.return * 100).toFixed(2)}% · threshold {(alert.threshold * 100).toFixed(2)}%
-                </p>
+                  <span>{alert.symbol}</span>
+                  <span className={metaClass(selected)}>{alert.window}</span>
+                  <span className={metaClass(selected)}>{alert.direction}</span>
+                  <span className={metaClass(selected)}>{freshness}</span>
+                </div>
+                <div className={`mt-2 flex flex-wrap gap-2 text-xs ${selected ? 'text-white/75' : 'dashboard-muted'}`}>
+                  <span>return {(alert.return * 100).toFixed(2)}%</span>
+                  <span>threshold {(alert.threshold * 100).toFixed(2)}%</span>
+                </div>
                 <p className={`mt-2 text-sm leading-6 ${selected ? 'text-white' : 'text-[color:var(--text-soft)]'}`}>{formatSummary(alert.summary)}</p>
               </li>
             )

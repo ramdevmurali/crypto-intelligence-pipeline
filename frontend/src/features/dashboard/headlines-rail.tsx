@@ -59,22 +59,24 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
           {items.slice(0, 8).map((headline) => {
             const age = ageSec(headline.time, nowMs)
             return (
-              <li key={`${headline.time}|${headline.url ?? headline.title}`} className="dashboard-subcard px-3 py-2">
-                <p className="truncate text-sm font-medium text-[color:var(--text)]">{headline.title}</p>
-                <div className="dashboard-muted mt-1 flex flex-wrap items-center gap-2 text-xs">
-                  <span>{headline.source ?? 'unknown'}</span>
-                  <span>{formatIsoClock(headline.time)}</span>
+              <li key={`${headline.time}|${headline.url ?? headline.title}`} className="dashboard-subcard px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="line-clamp-2 text-sm font-medium leading-5 text-[color:var(--text)]">{headline.title}</p>
+                  {headline.url && (
+                    <a className="shrink-0 text-xs font-medium text-[color:var(--accent)] underline-offset-2 hover:underline" href={headline.url} rel="noreferrer noopener" target="_blank">
+                      open
+                    </a>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="meta-pill">{headline.source ?? 'unknown'}</span>
+                  <span className="meta-pill">{formatIsoClock(headline.time)}</span>
                   <span className={`rounded-full px-2 py-0.5 ${freshnessClass(age)}`}>
                     {age === null ? 'age n/a' : `${age}s`}
                   </span>
                   <span className="rounded-full bg-[color:var(--surface-soft)] px-2 py-0.5 text-[color:var(--text-muted)]">
                     sentiment {sentimentLabel(headline.sentiment)}
                   </span>
-                  {headline.url && (
-                    <a className="text-[color:var(--accent)] underline-offset-2 hover:underline" href={headline.url} rel="noreferrer noopener" target="_blank">
-                      source
-                    </a>
-                  )}
                 </div>
               </li>
             )

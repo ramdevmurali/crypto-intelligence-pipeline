@@ -28,6 +28,16 @@ function yesNo(value: boolean): string {
   return value ? 'yes' : 'no'
 }
 
+function streamDotClass(isLive: boolean, isError: boolean): string {
+  if (isError) {
+    return 'status-dot-danger'
+  }
+  if (isLive) {
+    return 'status-dot-live'
+  }
+  return 'status-dot-warn'
+}
+
 function ageSec(value: number, nowMs: number): number {
   return Math.max(0, Math.floor((nowMs - value) / 1000))
 }
@@ -96,6 +106,7 @@ export function LiveStatusRail({
     streamsLive: alertsLive && headlinesLive,
     healthAgeSec,
   })
+  const fallbackText = metricsFailedSymbols.length === 0 ? 'none' : metricsFailedSymbols.join(', ')
 
   return (
     <section className="dashboard-card">
@@ -106,32 +117,36 @@ export function LiveStatusRail({
         </span>
       </header>
 
-      <ul className="dashboard-muted space-y-2 text-sm">
-        <li className="flex items-center justify-between">
+      <ul className="dashboard-muted text-sm">
+        <li className="panel-row">
           <span>Health age</span>
-          <strong className="font-medium text-[color:var(--text)]">{healthAgeSec === null ? 'n/a' : `${healthAgeSec}s`}</strong>
+          <strong className="panel-value">{healthAgeSec === null ? 'n/a' : `${healthAgeSec}s`}</strong>
         </li>
-        <li className="flex items-center justify-between">
+        <li className="panel-row">
           <span>Alerts stream</span>
-          <strong className="font-medium text-[color:var(--text)]">{yesNo(alertsLive)}</strong>
-        </li>
-        <li className="flex items-center justify-between">
-          <span>Headlines stream</span>
-          <strong className="font-medium text-[color:var(--text)]">{yesNo(headlinesLive)}</strong>
-        </li>
-        <li className="flex items-center justify-between">
-          <span>Price refresh</span>
-          <strong className="font-medium text-[color:var(--text)]">{toClock(lastPriceUpdate)}</strong>
-        </li>
-        <li className="flex items-center justify-between">
-          <span>Metrics refresh</span>
-          <strong className="font-medium text-[color:var(--text)]">{toClock(lastMetricUpdate)}</strong>
-        </li>
-        <li className="flex items-center justify-between">
-          <span>Metric fallbacks</span>
-          <strong className="font-medium text-[color:var(--text)]">
-            {metricsFailedSymbols.length === 0 ? 'none' : metricsFailedSymbols.join(', ')}
+          <strong className="panel-value inline-flex items-center gap-2">
+            <span className={`status-dot ${streamDotClass(alertsLive, alertsError)}`} />
+            {yesNo(alertsLive)}
           </strong>
+        </li>
+        <li className="panel-row">
+          <span>Headlines stream</span>
+          <strong className="panel-value inline-flex items-center gap-2">
+            <span className={`status-dot ${streamDotClass(headlinesLive, headlinesError)}`} />
+            {yesNo(headlinesLive)}
+          </strong>
+        </li>
+        <li className="panel-row">
+          <span>Price refresh</span>
+          <strong className="panel-value">{toClock(lastPriceUpdate)}</strong>
+        </li>
+        <li className="panel-row">
+          <span>Metrics refresh</span>
+          <strong className="panel-value">{toClock(lastMetricUpdate)}</strong>
+        </li>
+        <li className="panel-row">
+          <span>Metric fallbacks</span>
+          <strong className="panel-value max-w-[11rem] truncate" title={fallbackText}>{fallbackText}</strong>
         </li>
       </ul>
     </section>
