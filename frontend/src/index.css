@@ -136,10 +136,37 @@ body {
   }
 
   .meta-pill {
-    background: rgba(255, 255, 255, 0.64);
+    background: var(--surface-strong);
     border-color: var(--stroke);
     color: var(--text-muted);
     @apply rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+
+  .meta-pill-selected {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.75);
+    @apply rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+
+  .chart-tooltip {
+    background: var(--surface-strong);
+    border-color: var(--stroke);
+    box-shadow: var(--shadow-tight);
+    @apply rounded-lg border px-3 py-2 text-xs;
+  }
+
+  .chart-tooltip-title {
+    color: var(--text);
+    @apply font-semibold;
+  }
+
+  .chart-tooltip-row {
+    color: var(--text-muted);
+  }
+
+  .panel-empty {
+    color: var(--text-muted);
+    @apply text-sm;
   }
 
   .status-dot {

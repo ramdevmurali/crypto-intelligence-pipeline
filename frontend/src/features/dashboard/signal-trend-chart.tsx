@@ -106,12 +106,12 @@ function TrendTooltip({ active, payload, label }: { active?: boolean; payload?: 
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-medium text-slate-700">{formatClock(label)}</p>
+    <div className="chart-tooltip">
+      <p className="chart-tooltip-title">{formatClock(label)}</p>
       {payload
         .filter((item) => typeof item.value === 'number' && Number.isFinite(item.value))
         .map((item) => (
-          <p key={item.name} className="text-slate-600">
+          <p key={item.name} className="chart-tooltip-row">
             {item.name}: {(item.value ?? 0).toFixed(3)}
           </p>
         ))}
@@ -135,27 +135,27 @@ function TrendMiniChart({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
-        <p className="mt-2 text-sm text-slate-500">No signal data in selected window.</p>
+      <div className="dashboard-subcard p-3">
+        <p className="dashboard-label">{title}</p>
+        <p className="panel-empty mt-2">No signal data in selected window.</p>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{title}</p>
+    <div className="dashboard-subcard p-3">
+      <p className="dashboard-label">{title}</p>
       <div className="mt-2 h-36 w-full">
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#e5e7eb" strokeDasharray="2 6" vertical={false} />
+            <CartesianGrid stroke="var(--stroke)" strokeDasharray="2 6" vertical={false} />
             <XAxis
               dataKey="ts"
               tickFormatter={formatClock}
               tickLine={false}
               axisLine={false}
               minTickGap={28}
-              stroke="#94a3b8"
+              stroke="var(--stroke-strong)"
               type="number"
               domain={['dataMin', 'dataMax']}
             />
@@ -165,11 +165,11 @@ function TrendMiniChart({
               domain={yDomain}
               allowDataOverflow
               width={44}
-              stroke="#94a3b8"
+              stroke="var(--stroke-strong)"
               tickFormatter={(value) => Number(value).toFixed(1)}
             />
             <Tooltip content={<TrendTooltip />} />
-            <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
+            <ReferenceLine y={0} stroke="var(--stroke-strong)" strokeDasharray="4 4" />
 
             {selectedSymbols.includes('btcusdt') && (
               <Line

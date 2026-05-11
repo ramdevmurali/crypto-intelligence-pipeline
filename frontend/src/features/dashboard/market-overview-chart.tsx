@@ -238,8 +238,8 @@ function ChartTooltip({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-medium text-slate-700">{formatClock(label)}</p>
+    <div className="chart-tooltip">
+      <p className="chart-tooltip-title">{formatClock(label)}</p>
       {payload
         .filter(
           (item) =>
@@ -252,14 +252,14 @@ function ChartTooltip({
             const indexValue = item.value ?? 0
             const changePct = indexValue - 100
             return (
-              <p key={item.name} className="text-slate-600">
+              <p key={item.name} className="chart-tooltip-row">
                 {labelForSeries(item.name)}: {indexValue.toFixed(2)} ({changePct >= 0 ? '+' : ''}{changePct.toFixed(2)}%)
               </p>
             )
           }
 
           return (
-            <p key={item.name} className="text-slate-600">
+            <p key={item.name} className="chart-tooltip-row">
               {labelForSeries(item.name)}: {formatPrice(item.value ?? null)}
             </p>
           )
@@ -287,21 +287,21 @@ export function MarketOverviewChart({
   )
 
   if (data.length === 0) {
-    return <p className="text-sm text-slate-500">No price data in selected window.</p>
+    return <p className="panel-empty">No price data in selected window.</p>
   }
 
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer>
         <ComposedChart data={data} margin={{ top: 10, right: 12, left: 8, bottom: 0 }}>
-          <CartesianGrid stroke="#e5e7eb" strokeDasharray="2 6" vertical={false} />
+          <CartesianGrid stroke="var(--stroke)" strokeDasharray="2 6" vertical={false} />
           <XAxis
             dataKey="ts"
             tickFormatter={formatClock}
             tickLine={false}
             axisLine={false}
             minTickGap={28}
-            stroke="#94a3b8"
+            stroke="var(--stroke-strong)"
             type="number"
             domain={['dataMin', 'dataMax']}
           />
@@ -314,14 +314,14 @@ export function MarketOverviewChart({
                 ? `${Number(value).toFixed(1)}`
                 : `$${Number(value).toLocaleString()}`
             }
-            stroke="#94a3b8"
+            stroke="var(--stroke-strong)"
             width={80}
           />
           <Tooltip content={<ChartTooltip mode={chartMode} />} />
           <Legend
             iconType="plainline"
             formatter={(value) => (
-              <span className="text-xs text-slate-500">{labelForSeries(String(value))}</span>
+              <span className="dashboard-muted text-xs">{labelForSeries(String(value))}</span>
             )}
           />
 

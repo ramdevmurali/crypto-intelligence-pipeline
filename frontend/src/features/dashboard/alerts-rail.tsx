@@ -22,7 +22,7 @@ function formatSummary(value: string | null): string {
 }
 
 function metaClass(selected: boolean): string {
-  return selected ? 'rounded-full border border-white/20 px-2 py-0.5 text-xs font-medium text-white/75' : 'meta-pill'
+  return selected ? 'meta-pill-selected' : 'meta-pill'
 }
 
 export function AlertsRail({

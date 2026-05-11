@@ -20,12 +20,12 @@ function ageSec(value: string, nowMs: number): number | null {
 
 function freshnessClass(age: number | null): string {
   if (age === null) {
-    return 'bg-[color:var(--surface-soft)] text-[color:var(--text-muted)]'
+    return 'meta-pill'
   }
   if (age <= 900) {
-    return 'bg-[color:var(--accent-soft)] text-[color:var(--accent)]'
+    return 'meta-pill bg-[color:var(--accent-soft)] text-[color:var(--accent)]'
   }
-  return 'bg-amber-50 text-[color:var(--warn)]'
+  return 'meta-pill bg-amber-50 text-[color:var(--warn)]'
 }
 
 function sentimentLabel(value: number | null): string {
@@ -71,10 +71,10 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                   <span className="meta-pill">{headline.source ?? 'unknown'}</span>
                   <span className="meta-pill">{formatIsoClock(headline.time)}</span>
-                  <span className={`rounded-full px-2 py-0.5 ${freshnessClass(age)}`}>
+                  <span className={freshnessClass(age)}>
                     {age === null ? 'age n/a' : `${age}s`}
                   </span>
-                  <span className="rounded-full bg-[color:var(--surface-soft)] px-2 py-0.5 text-[color:var(--text-muted)]">
+                  <span className="meta-pill">
                     sentiment {sentimentLabel(headline.sentiment)}
                   </span>
                 </div>
