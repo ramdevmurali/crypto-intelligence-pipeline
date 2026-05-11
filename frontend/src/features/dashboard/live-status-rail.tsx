@@ -98,38 +98,38 @@ export function LiveStatusRail({
   })
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="dashboard-card">
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">Live Status</h2>
+        <h2 className="dashboard-heading">Live Status</h2>
         <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getHealthChipClass(healthState)}`}>
           {healthState}
         </span>
       </header>
 
-      <ul className="space-y-2 text-sm text-slate-600">
+      <ul className="dashboard-muted space-y-2 text-sm">
         <li className="flex items-center justify-between">
           <span>Health age</span>
-          <strong className="font-medium text-slate-800">{healthAgeSec === null ? 'n/a' : `${healthAgeSec}s`}</strong>
+          <strong className="font-medium text-[color:var(--text)]">{healthAgeSec === null ? 'n/a' : `${healthAgeSec}s`}</strong>
         </li>
         <li className="flex items-center justify-between">
           <span>Alerts stream</span>
-          <strong className="font-medium text-slate-800">{yesNo(alertsLive)}</strong>
+          <strong className="font-medium text-[color:var(--text)]">{yesNo(alertsLive)}</strong>
         </li>
         <li className="flex items-center justify-between">
           <span>Headlines stream</span>
-          <strong className="font-medium text-slate-800">{yesNo(headlinesLive)}</strong>
+          <strong className="font-medium text-[color:var(--text)]">{yesNo(headlinesLive)}</strong>
         </li>
         <li className="flex items-center justify-between">
           <span>Price refresh</span>
-          <strong className="font-medium text-slate-800">{toClock(lastPriceUpdate)}</strong>
+          <strong className="font-medium text-[color:var(--text)]">{toClock(lastPriceUpdate)}</strong>
         </li>
         <li className="flex items-center justify-between">
           <span>Metrics refresh</span>
-          <strong className="font-medium text-slate-800">{toClock(lastMetricUpdate)}</strong>
+          <strong className="font-medium text-[color:var(--text)]">{toClock(lastMetricUpdate)}</strong>
         </li>
         <li className="flex items-center justify-between">
           <span>Metric fallbacks</span>
-          <strong className="font-medium text-slate-800">
+          <strong className="font-medium text-[color:var(--text)]">
             {metricsFailedSymbols.length === 0 ? 'none' : metricsFailedSymbols.join(', ')}
           </strong>
         </li>

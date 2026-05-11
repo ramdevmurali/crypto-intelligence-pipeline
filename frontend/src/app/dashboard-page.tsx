@@ -40,13 +40,13 @@ export function DashboardPage() {
   )
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="app-frame">
       <header className="mb-4">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">Realtime Crypto Narrato</p>
+        <p className="dashboard-eyebrow">Realtime Crypto Narrato</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Market Intelligence Dashboard</h1>
-            <p className="mt-1 text-sm text-slate-500">Live prices, signal shifts, headline freshness, and anomaly context.</p>
+            <h1 className="dashboard-title">Market Intelligence Dashboard</h1>
+            <p className="dashboard-subtitle">Live prices, signal shifts, headline freshness, and anomaly context.</p>
           </div>
         </div>
       </header>
@@ -77,21 +77,19 @@ export function DashboardPage() {
         </div>
 
         <section className="lg:col-span-8 lg:order-1">
-          <header className="mb-3 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <header className="control-shell mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">{activeStack.label}</h2>
-              <p className="text-xs text-slate-500">{activeStack.description}</p>
+              <h2 className="dashboard-heading">{activeStack.label}</h2>
+              <p className="dashboard-muted text-xs">{activeStack.description}</p>
             </div>
-            <div className="flex rounded-full border border-slate-200 bg-slate-50 p-1" role="tablist" aria-label="Dashboard stack">
+            <div className="tab-strip" role="tablist" aria-label="Dashboard stack">
               {STACK_TABS.map((tab) => {
                 const active = activeStackTab === tab.value
                 return (
                   <button
                     key={tab.value}
                     aria-selected={active}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                    className={`tab-button ${active ? 'tab-button-active' : ''}`}
                     onClick={() => setActiveStackTab(tab.value)}
                     role="tab"
                     type="button"
@@ -109,13 +107,13 @@ export function DashboardPage() {
               style={{ transform: `translateX(-${activeStackIndex * 100}%)` }}
             >
               <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'market'}>
-                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <article className="dashboard-card">
                   <header className="mb-3 flex items-center justify-between">
                     <div>
-                      <h2 className="text-sm font-semibold text-slate-900">Market Overview</h2>
-                      <p className="text-xs text-slate-500">Price trajectory with anomaly overlays</p>
+                      <h2 className="dashboard-heading">Market Overview</h2>
+                      <p className="dashboard-muted text-xs">Price trajectory with anomaly overlays</p>
                     </div>
-                    <p className="text-xs text-slate-500">window {window}m</p>
+                    <p className="dashboard-muted text-xs">window {window}m</p>
                   </header>
                   <MarketOverviewChart
                     priceSeriesBySymbol={dashboard.priceSeriesBySymbol}
@@ -127,10 +125,10 @@ export function DashboardPage() {
               </div>
 
               <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'signals'}>
-                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <article className="dashboard-card">
                   <header className="mb-3">
-                    <h2 className="text-sm font-semibold text-slate-900">Signal Trends</h2>
-                    <p className="text-xs text-slate-500">EWMA return and volatility z-score behavior</p>
+                    <h2 className="dashboard-heading">Signal Trends</h2>
+                    <p className="dashboard-muted text-xs">EWMA return and volatility z-score behavior</p>
                   </header>
                   <SignalTrendChart
                     metricSeriesBySymbol={dashboard.metricSeriesBySymbol}

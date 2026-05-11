@@ -23,22 +23,22 @@ export function KPIStack({ items }: KPIStackProps) {
   }, [])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="dashboard-card">
       <header className="mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">KPI Stack</h2>
-        <p className="text-xs text-slate-500">Live per-symbol signal snapshot</p>
+        <h2 className="dashboard-heading">KPI Stack</h2>
+        <p className="dashboard-muted text-xs">Live per-symbol signal snapshot</p>
       </header>
 
       <div className="space-y-2">
         {items.map((item) => (
-          <article key={item.symbol} className="rounded-xl border border-slate-200 p-3">
+          <article key={item.symbol} className="dashboard-subcard p-3">
             <div className="mb-1 flex items-center justify-between">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{symbolLabel(item.symbol)}</p>
-              <p className="text-xs text-slate-500">freshness {formatAge(item.freshnessTs, nowMs)}</p>
+              <p className="dashboard-label">{symbolLabel(item.symbol)}</p>
+              <p className="dashboard-muted text-xs">freshness {formatAge(item.freshnessTs, nowMs)}</p>
             </div>
-            <p className="text-lg font-semibold text-slate-900">{formatPrice(item.price)}</p>
-            <p className="mt-1 text-xs text-slate-600">ret 1m {formatPct(item.return1m)} · z {formatNumber(item.returnZ)} · vol z {formatNumber(item.volZ)}</p>
-            <p className="text-xs text-slate-500">attention {formatNumber(item.attention, 2)}</p>
+            <p className="text-lg font-semibold text-[color:var(--text)]">{formatPrice(item.price)}</p>
+            <p className="mt-1 text-xs text-[color:var(--text-soft)]">ret 1m {formatPct(item.return1m)} · z {formatNumber(item.returnZ)} · vol z {formatNumber(item.volZ)}</p>
+            <p className="dashboard-muted text-xs">attention {formatNumber(item.attention, 2)}</p>
           </article>
         ))}
       </div>

@@ -4,16 +4,26 @@
 
 :root {
   font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif;
-  color: #111827;
-  background-color: #f7f8fa;
+  color: #17211d;
+  background-color: #eef2ef;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
-  --surface: #ffffff;
-  --surface-soft: #fbfcfd;
-  --stroke: #e6e8ec;
-  --text: #111827;
-  --text-muted: #667085;
-  --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --app-bg: #eef2ef;
+  --surface: rgba(253, 254, 251, 0.94);
+  --surface-strong: #ffffff;
+  --surface-soft: #f5f7f3;
+  --surface-pressed: #17211d;
+  --stroke: #d8dfd7;
+  --stroke-strong: #b7c3ba;
+  --text: #17211d;
+  --text-soft: #36443e;
+  --text-muted: #66746d;
+  --accent: #1f6b55;
+  --accent-soft: #e5f2ec;
+  --warn: #936316;
+  --danger: #a33b45;
+  --shadow-soft: 0 16px 42px rgba(34, 48, 40, 0.08);
+  --shadow-tight: 0 8px 20px rgba(34, 48, 40, 0.06);
 }
 
 * {
@@ -25,11 +35,113 @@ body {
   min-width: 320px;
   color: var(--text);
   background:
-    radial-gradient(900px 500px at 10% -10%, rgba(255, 255, 255, 0.95) 0%, rgba(247, 248, 250, 0) 60%),
-    radial-gradient(1000px 600px at 100% -20%, rgba(229, 233, 240, 0.5) 0%, rgba(247, 248, 250, 0) 60%),
-    #f7f8fa;
+    linear-gradient(rgba(23, 33, 29, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 33, 29, 0.028) 1px, transparent 1px),
+    linear-gradient(180deg, #eef2ef 0%, #f6f7f3 42%, #edf1ee 100%);
+  background-size: 28px 28px, 28px 28px, auto;
 }
 
 #root {
   isolation: isolate;
+}
+
+@layer components {
+  .app-frame {
+    @apply mx-auto min-h-screen w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8;
+  }
+
+  .dashboard-eyebrow {
+    color: var(--accent);
+    @apply text-xs font-semibold uppercase tracking-[0.24em];
+  }
+
+  .dashboard-title {
+    color: var(--text);
+    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+  }
+
+  .dashboard-subtitle {
+    color: var(--text-muted);
+    @apply mt-1 text-sm;
+  }
+
+  .dashboard-card {
+    background: var(--surface);
+    border-color: var(--stroke);
+    box-shadow: var(--shadow-soft);
+    @apply rounded-xl border p-4;
+  }
+
+  .dashboard-card-compact {
+    background: var(--surface);
+    border-color: var(--stroke);
+    box-shadow: var(--shadow-tight);
+    @apply rounded-xl border px-3 py-3;
+  }
+
+  .dashboard-subcard {
+    background: var(--surface-soft);
+    border-color: var(--stroke);
+    @apply rounded-lg border;
+  }
+
+  .dashboard-label {
+    color: var(--text-muted);
+    @apply text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .dashboard-heading {
+    color: var(--text);
+    @apply text-sm font-semibold;
+  }
+
+  .dashboard-muted {
+    color: var(--text-muted);
+  }
+
+  .control-shell {
+    background: rgba(253, 254, 251, 0.82);
+    border-color: var(--stroke);
+    box-shadow: var(--shadow-tight);
+    @apply rounded-xl border px-3 py-2 backdrop-blur;
+  }
+
+  .control-chip {
+    border-color: var(--stroke-strong);
+    background: var(--surface-strong);
+    color: var(--text-soft);
+    @apply rounded-full border px-3 py-1 text-xs font-semibold transition-colors;
+  }
+
+  .control-chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .control-chip-active {
+    border-color: var(--surface-pressed);
+    background: var(--surface-pressed);
+    color: #fff;
+  }
+
+  .tab-strip {
+    background: var(--surface-soft);
+    border-color: var(--stroke);
+    @apply flex rounded-full border p-1;
+  }
+
+  .tab-button {
+    color: var(--text-muted);
+    @apply rounded-full px-3 py-1 text-xs font-semibold transition-colors;
+  }
+
+  .tab-button:hover {
+    color: var(--text);
+  }
+
+  .tab-button-active {
+    background: var(--surface-pressed);
+    color: #fff;
+    box-shadow: var(--shadow-tight);
+  }
 }

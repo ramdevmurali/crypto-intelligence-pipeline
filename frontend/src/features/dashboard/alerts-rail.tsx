@@ -30,15 +30,15 @@ export function AlertsRail({
   onSelectAlert,
 }: AlertsRailProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="dashboard-card">
       <header className="mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">Alerts</h2>
-        <p className="text-xs text-slate-500">Realtime anomaly stream</p>
+        <h2 className="dashboard-heading">Alerts</h2>
+        <p className="dashboard-muted text-xs">Realtime anomaly stream</p>
       </header>
 
-      {isLoading && <p className="text-sm text-slate-500">Loading alerts...</p>}
-      {isError && <p className="text-sm text-rose-700">Failed to load alerts: {errorMessage ?? 'unknown error'}</p>}
-      {!isLoading && !isError && items.length === 0 && <p className="text-sm text-slate-500">No alerts in current window.</p>}
+      {isLoading && <p className="dashboard-muted text-sm">Loading alerts...</p>}
+      {isError && <p className="text-sm text-[color:var(--danger)]">Failed to load alerts: {errorMessage ?? 'unknown error'}</p>}
+      {!isLoading && !isError && items.length === 0 && <p className="dashboard-muted text-sm">No alerts in current window.</p>}
 
       {!isLoading && !isError && items.length > 0 && (
         <ul className="space-y-2">
@@ -51,8 +51,8 @@ export function AlertsRail({
                 key={key}
                 className={`cursor-pointer rounded-xl border px-3 py-3 transition-colors ${
                   selected
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    ? 'border-[color:var(--surface-pressed)] bg-[color:var(--surface-pressed)] text-white'
+                    : 'dashboard-subcard text-[color:var(--text-soft)] hover:border-[color:var(--stroke-strong)]'
                 }`}
                 onClick={() => onSelectAlert(alert)}
                 onKeyDown={(event) => {
@@ -67,12 +67,12 @@ export function AlertsRail({
                 <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
                   <span className={`h-2 w-2 rounded-full ${getDirectionDotClass(alert.direction)}`} />
                   {alert.symbol} · {alert.window} · {alert.direction}
-                  <span className={`${selected ? 'text-slate-200' : 'text-slate-500'}`}>{freshness}</span>
+                  <span className={`${selected ? 'text-white/70' : 'dashboard-muted'}`}>{freshness}</span>
                 </p>
-                <p className={`mt-1 text-xs ${selected ? 'text-slate-200' : 'text-slate-500'}`}>
+                <p className={`mt-1 text-xs ${selected ? 'text-white/70' : 'dashboard-muted'}`}>
                   return {(alert.return * 100).toFixed(2)}% · threshold {(alert.threshold * 100).toFixed(2)}%
                 </p>
-                <p className={`mt-2 text-sm leading-6 ${selected ? 'text-white' : 'text-slate-700'}`}>{formatSummary(alert.summary)}</p>
+                <p className={`mt-2 text-sm leading-6 ${selected ? 'text-white' : 'text-[color:var(--text-soft)]'}`}>{formatSummary(alert.summary)}</p>
               </li>
             )
           })}
