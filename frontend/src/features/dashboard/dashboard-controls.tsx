@@ -29,8 +29,8 @@ export function DashboardControls({
   onChangeWindow,
 }: DashboardControlsProps) {
   return (
-    <div className="control-shell flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
+    <div className="control-shell dashboard-controls">
+      <div className="control-group">
         <p className="dashboard-label">Symbols</p>
         {SYMBOL_OPTIONS.map((option) => (
           <button
@@ -44,7 +44,7 @@ export function DashboardControls({
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="control-group">
         <p className="dashboard-label">Window</p>
         {WINDOW_OPTIONS.map((option) => (
           <button

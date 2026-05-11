@@ -41,9 +41,9 @@ export function DashboardPage() {
 
   return (
     <main className="app-frame">
-      <header className="mb-4">
+      <header className="dashboard-console-header">
         <p className="dashboard-eyebrow">Realtime Crypto Narrato</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+        <div className="dashboard-console-copy mt-2">
           <div>
             <h1 className="dashboard-title">Market Intelligence Dashboard</h1>
             <p className="dashboard-subtitle">Live prices, signal shifts, headline freshness, and anomaly context.</p>
@@ -58,8 +58,8 @@ export function DashboardPage() {
         onChangeWindow={setWindow}
       />
 
-      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="space-y-4 lg:col-span-4 lg:order-2">
+      <section className="dashboard-shell-grid">
+        <div className="dashboard-side-stack">
           <LiveStatusRail
             alertsLive={dashboard.alerts.isLive}
             alertsError={dashboard.alerts.isError}
@@ -76,8 +76,8 @@ export function DashboardPage() {
           <KPIStack items={dashboard.marketStatus} />
         </div>
 
-        <section className="lg:col-span-8 lg:order-1">
-          <header className="control-shell mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="dashboard-stack">
+          <header className="stack-header">
             <div>
               <h2 className="dashboard-heading">{activeStack.label}</h2>
               <p className="dashboard-muted text-xs">{activeStack.description}</p>
