@@ -4,26 +4,35 @@
 
 :root {
   font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif;
-  color: #17211d;
-  background-color: #eef2ef;
+  color: #eef5f1;
+  background-color: #0c1110;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
-  --app-bg: #eef2ef;
-  --surface: rgba(253, 254, 251, 0.94);
-  --surface-strong: #ffffff;
-  --surface-soft: #f5f7f3;
-  --surface-pressed: #17211d;
-  --stroke: #d8dfd7;
-  --stroke-strong: #b7c3ba;
-  --text: #17211d;
-  --text-soft: #36443e;
-  --text-muted: #66746d;
-  --accent: #1f6b55;
-  --accent-soft: #e5f2ec;
-  --warn: #936316;
-  --danger: #a33b45;
-  --shadow-soft: 0 16px 42px rgba(34, 48, 40, 0.08);
-  --shadow-tight: 0 8px 20px rgba(34, 48, 40, 0.06);
+  --app-bg: #0c1110;
+  --surface: rgba(18, 25, 23, 0.96);
+  --surface-strong: #1a2421;
+  --surface-soft: #111a17;
+  --surface-pressed: #1f6b55;
+  --stroke: #25342f;
+  --stroke-strong: #3a5148;
+  --text: #eef5f1;
+  --text-soft: #c9d5cf;
+  --text-muted: #8fa09a;
+  --accent: #64d6aa;
+  --accent-soft: rgba(31, 107, 85, 0.2);
+  --btc: #f7931a;
+  --eth: #627eea;
+  --positive: #34d399;
+  --positive-soft: rgba(16, 185, 129, 0.14);
+  --negative: #fb7185;
+  --negative-soft: rgba(244, 63, 94, 0.14);
+  --neutral: #94a3b8;
+  --neutral-soft: rgba(148, 163, 184, 0.14);
+  --warn: #f2b84b;
+  --warn-soft: rgba(242, 184, 75, 0.14);
+  --danger: #fb7185;
+  --shadow-soft: 0 16px 46px rgba(0, 0, 0, 0.36);
+  --shadow-tight: 0 8px 22px rgba(0, 0, 0, 0.28);
 }
 
 * {
@@ -34,11 +43,7 @@ body {
   margin: 0;
   min-width: 320px;
   color: var(--text);
-  background:
-    linear-gradient(rgba(23, 33, 29, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(23, 33, 29, 0.028) 1px, transparent 1px),
-    linear-gradient(180deg, #eef2ef 0%, #f6f7f3 42%, #edf1ee 100%);
-  background-size: 28px 28px, 28px 28px, auto;
+  background: var(--app-bg);
 }
 
 #root {
@@ -53,9 +58,7 @@ body {
   .dashboard-console-header {
     position: relative;
     overflow: hidden;
-    background:
-      linear-gradient(90deg, rgba(31, 107, 85, 0.08), rgba(253, 254, 251, 0) 42%),
-      var(--surface);
+    background: var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-soft);
     @apply rounded-xl border px-4 py-2.5 sm:px-5;
@@ -67,7 +70,7 @@ body {
     width: 100%;
     height: 3px;
     content: "";
-    background: linear-gradient(90deg, var(--accent), rgba(31, 107, 85, 0.18));
+    background: linear-gradient(90deg, var(--accent), rgba(100, 214, 170, 0.16));
   }
 
   .dashboard-console-copy {
@@ -110,6 +113,42 @@ body {
     @apply rounded-lg border;
   }
 
+  .kpi-accent-btcusdt {
+    border-left-color: var(--btc);
+    @apply border-l-4;
+  }
+
+  .kpi-accent-ethusdt {
+    border-left-color: var(--eth);
+    @apply border-l-4;
+  }
+
+  .symbol-accent-btcusdt {
+    color: var(--btc);
+  }
+
+  .symbol-accent-ethusdt {
+    color: var(--eth);
+  }
+
+  .value-positive {
+    color: var(--positive);
+  }
+
+  .value-negative {
+    color: var(--negative);
+  }
+
+  .alert-card-up {
+    border-left-color: var(--positive);
+    @apply border-l-4;
+  }
+
+  .alert-card-down {
+    border-left-color: var(--negative);
+    @apply border-l-4;
+  }
+
   .panel-row {
     border-color: color-mix(in srgb, var(--stroke) 74%, transparent);
     @apply flex items-center justify-between gap-3 border-t py-1.5 first:border-t-0 first:pt-0 last:pb-0;
@@ -146,6 +185,24 @@ body {
     border-color: rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.75);
     @apply rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+
+  .sentiment-positive {
+    background: var(--positive-soft);
+    border-color: color-mix(in srgb, var(--positive) 34%, transparent);
+    color: var(--positive);
+  }
+
+  .sentiment-negative {
+    background: var(--negative-soft);
+    border-color: color-mix(in srgb, var(--negative) 34%, transparent);
+    color: var(--negative);
+  }
+
+  .sentiment-neutral {
+    background: var(--neutral-soft);
+    border-color: color-mix(in srgb, var(--neutral) 28%, transparent);
+    color: var(--neutral);
   }
 
   .chart-tooltip {
@@ -213,7 +270,7 @@ body {
   }
 
   .control-shell {
-    background: rgba(253, 254, 251, 0.82);
+    background: var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-tight);
     @apply rounded-xl border px-3 py-1.5 backdrop-blur;
@@ -267,9 +324,7 @@ body {
   }
 
   .stack-header {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(245, 247, 243, 0.74)),
-      var(--surface);
+    background: var(--surface);
     border-color: var(--stroke);
     box-shadow: var(--shadow-tight);
     @apply mb-2 flex flex-col gap-2 rounded-xl border px-3 py-2 backdrop-blur sm:flex-row sm:items-center sm:justify-between;

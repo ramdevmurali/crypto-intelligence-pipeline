@@ -25,7 +25,7 @@ function freshnessClass(age: number | null): string {
   if (age <= 900) {
     return 'meta-pill bg-[color:var(--accent-soft)] text-[color:var(--accent)]'
   }
-  return 'meta-pill bg-amber-50 text-[color:var(--warn)]'
+  return 'meta-pill bg-[color:var(--warn-soft)] text-[color:var(--warn)]'
 }
 
 function sentimentLabel(value: number | null): string {
@@ -33,6 +33,19 @@ function sentimentLabel(value: number | null): string {
     return 'n/a'
   }
   return value.toFixed(3)
+}
+
+function sentimentClass(value: number | null): string {
+  if (value === null) {
+    return 'sentiment-neutral'
+  }
+  if (value >= 0.05) {
+    return 'sentiment-positive'
+  }
+  if (value <= -0.05) {
+    return 'sentiment-negative'
+  }
+  return 'sentiment-neutral'
 }
 
 export function HeadlinesRail({ items, isLoading, isError, errorMessage }: HeadlinesRailProps) {
@@ -74,7 +87,7 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
                   <span className={freshnessClass(age)}>
                     {age === null ? 'age n/a' : `${age}s`}
                   </span>
-                  <span className="meta-pill">
+                  <span className={`meta-pill ${sentimentClass(headline.sentiment)}`}>
                     sentiment {sentimentLabel(headline.sentiment)}
                   </span>
                 </div>

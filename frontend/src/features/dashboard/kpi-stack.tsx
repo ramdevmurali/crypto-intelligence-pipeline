@@ -14,6 +14,13 @@ function formatAge(ts: number | null, nowMs: number): string {
   return `${Math.max(0, Math.floor((nowMs - ts) / 1000))}s`
 }
 
+function valueToneClass(value: number | null): string {
+  if (value === null || value === 0) {
+    return ''
+  }
+  return value > 0 ? 'value-positive' : 'value-negative'
+}
+
 export function KPIStack({ items }: KPIStackProps) {
   const [nowMs, setNowMs] = useState(() => Date.now())
 
@@ -31,16 +38,16 @@ export function KPIStack({ items }: KPIStackProps) {
 
       <div className="space-y-2">
         {items.map((item) => (
-          <article key={item.symbol} className="dashboard-subcard p-3">
+          <article key={item.symbol} className={`dashboard-subcard kpi-accent-${item.symbol} p-3`}>
             <div className="mb-1 flex items-center justify-between">
-              <p className="dashboard-label">{symbolLabel(item.symbol)}</p>
+              <p className={`dashboard-label symbol-accent-${item.symbol}`}>{symbolLabel(item.symbol)}</p>
               <p className="dashboard-muted text-xs">freshness {formatAge(item.freshnessTs, nowMs)}</p>
             </div>
             <p className="text-xl font-semibold tabular-nums text-[color:var(--text)]">{formatPrice(item.price)}</p>
             <div className="metric-strip">
               <p className="metric-cell">
                 ret 1m
-                <strong>{formatPct(item.return1m)}</strong>
+                <strong className={valueToneClass(item.return1m)}>{formatPct(item.return1m)}</strong>
               </p>
               <p className="metric-cell">
                 z

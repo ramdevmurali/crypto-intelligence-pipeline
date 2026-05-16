@@ -25,6 +25,17 @@ function metaClass(selected: boolean): string {
   return selected ? 'meta-pill-selected' : 'meta-pill'
 }
 
+function alertToneClass(direction: string): string {
+  const normalized = direction.trim().toLowerCase()
+  if (normalized === 'up') {
+    return 'alert-card-up'
+  }
+  if (normalized === 'down') {
+    return 'alert-card-down'
+  }
+  return ''
+}
+
 export function AlertsRail({
   items,
   isLoading,
@@ -56,7 +67,7 @@ export function AlertsRail({
                 className={`cursor-pointer rounded-xl border px-3 py-3 transition-colors ${
                   selected
                     ? 'border-[color:var(--surface-pressed)] bg-[color:var(--surface-pressed)] text-white'
-                    : 'dashboard-subcard text-[color:var(--text-soft)] hover:border-[color:var(--stroke-strong)]'
+                    : `dashboard-subcard ${alertToneClass(alert.direction)} text-[color:var(--text-soft)] hover:border-[color:var(--stroke-strong)]`
                 }`}
                 onClick={() => onSelectAlert(alert)}
                 onKeyDown={(event) => {

@@ -1,8 +1,8 @@
 import type { DashboardHealthState, SymbolKey } from './types'
 
 const SYMBOL_STROKE_BY_KEY: Record<SymbolKey, string> = {
-  btcusdt: '#b7791f',
-  ethusdt: '#2f6f88',
+  btcusdt: '#f7931a',
+  ethusdt: '#627eea',
 }
 
 export function formatClock(ts: number): string {
@@ -55,10 +55,10 @@ export function formatNumber(value: number | null, digits = 3): string {
 
 export function getHealthChipClass(state: DashboardHealthState): string {
   if (state === 'live') {
-    return 'bg-[color:var(--accent-soft)] text-[color:var(--accent)] border-[color:var(--accent)]/25'
+    return 'bg-[color:var(--positive-soft)] text-[color:var(--positive)] border-[color:var(--positive)]/25'
   }
   if (state === 'degraded') {
-    return 'bg-amber-50 text-[color:var(--warn)] border-amber-200'
+    return 'bg-[color:var(--warn-soft)] text-[color:var(--warn)] border-[color:var(--warn)]/25'
   }
   return 'bg-[color:var(--surface-soft)] text-[color:var(--text-muted)] border-[color:var(--stroke-strong)]'
 }
