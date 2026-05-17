@@ -25,6 +25,28 @@ function makeAlert(overrides: Partial<Alert> = {}): Alert {
   }
 }
 
+function renderSelectableAlert() {
+  const alert = makeAlert()
+  const onSelectAlert = vi.fn()
+
+  render(
+    <AlertsRail
+      errorMessage={null}
+      isError={false}
+      isLoading={false}
+      items={[alert]}
+      onSelectAlert={onSelectAlert}
+      selectedAlertKey={null}
+    />
+  )
+
+  return {
+    alert,
+    onSelectAlert,
+    row: screen.getByRole('button'),
+  }
+}
+
 describe('AlertsRail', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -137,21 +159,33 @@ describe('AlertsRail', () => {
   it('calls onSelectAlert when an alert row is clicked', async () => {
     vi.useRealTimers()
     const user = userEvent.setup()
-    const alert = makeAlert()
-    const onSelectAlert = vi.fn()
+    const { alert, onSelectAlert, row } = renderSelectableAlert()
 
-    render(
-      <AlertsRail
-        errorMessage={null}
-        isError={false}
-        isLoading={false}
-        items={[alert]}
-        onSelectAlert={onSelectAlert}
-        selectedAlertKey={null}
-      />
-    )
+    await user.click(row)
 
-    await user.click(screen.getByRole('button'))
+    expect(onSelectAlert).toHaveBeenCalledOnce()
+    expect(onSelectAlert).toHaveBeenCalledWith(alert)
+  })
+
+  it('calls onSelectAlert when an alert row is activated with Enter', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    const { alert, onSelectAlert, row } = renderSelectableAlert()
+
+    row.focus()
+    await user.keyboard('{Enter}')
+
+    expect(onSelectAlert).toHaveBeenCalledOnce()
+    expect(onSelectAlert).toHaveBeenCalledWith(alert)
+  })
+
+  it('calls onSelectAlert when an alert row is activated with Space', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    const { alert, onSelectAlert, row } = renderSelectableAlert()
+
+    row.focus()
+    await user.keyboard(' ')
 
     expect(onSelectAlert).toHaveBeenCalledOnce()
     expect(onSelectAlert).toHaveBeenCalledWith(alert)
