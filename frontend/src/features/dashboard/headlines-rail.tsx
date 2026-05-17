@@ -69,11 +69,11 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
           {items.slice(0, 8).map((headline) => {
             const age = ageSec(headline.time, nowMs)
             const sentiment = sentimentTone(headline.sentiment)
-            const titleClass = 'text-sm font-medium leading-5 text-[color:var(--eth)] underline-offset-2 hover:underline'
+            const titleClass = 'text-sm font-medium leading-5 text-[color:var(--control-orange)] underline-offset-2 hover:underline'
             return (
               <li key={`${headline.time}|${headline.url ?? headline.title}`} className="dashboard-subcard px-3 py-3">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[color:var(--stroke)] bg-[color:var(--surface-strong)] text-[color:var(--eth)]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[color:var(--stroke)] bg-[color:var(--surface-strong)] text-[color:var(--control-orange)]">
                     <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                       <path d="M6 7h8" />
                       <path d="M6 11h8" />

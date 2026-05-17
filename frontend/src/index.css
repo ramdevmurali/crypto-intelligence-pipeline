@@ -5,31 +5,33 @@
 :root {
   font-family: "Avenir Next", "SF Pro Display", "Helvetica Neue", "Segoe UI", sans-serif;
   color: #eef5f1;
-  background-color: #0c1110;
+  background-color: #000;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
-  --app-bg: #0c1110;
-  --surface: rgba(18, 25, 23, 0.96);
-  --surface-strong: #1a2421;
-  --surface-soft: #111a17;
-  --surface-pressed: #1f6b55;
-  --stroke: #25342f;
-  --stroke-strong: #3a5148;
+  --app-bg: #000;
+  --surface: rgba(10, 10, 10, 0.97);
+  --surface-strong: #151515;
+  --surface-soft: #0d0d0d;
+  --surface-pressed: #2a1608;
+  --stroke: #252525;
+  --stroke-strong: #3a3a3a;
   --text: #eef5f1;
   --text-soft: #c9d5cf;
   --text-muted: #8fa09a;
-  --accent: #64d6aa;
-  --accent-soft: rgba(31, 107, 85, 0.2);
+  --control-orange: #ff5a00;
+  --control-orange-soft: rgba(255, 90, 0, 0.18);
+  --accent: var(--control-orange);
+  --accent-soft: var(--control-orange-soft);
   --btc: #f7931a;
   --eth: #627eea;
   --positive: #34d399;
   --positive-soft: rgba(16, 185, 129, 0.14);
-  --negative: #fb7185;
-  --negative-soft: rgba(244, 63, 94, 0.14);
+  --negative: var(--warn);
+  --negative-soft: var(--warn-soft);
   --neutral: #94a3b8;
   --neutral-soft: rgba(148, 163, 184, 0.14);
-  --warn: #f2b84b;
-  --warn-soft: rgba(242, 184, 75, 0.14);
+  --warn: #ff2d2d;
+  --warn-soft: rgba(255, 45, 45, 0.16);
   --danger: #fb7185;
   --shadow-soft: 0 16px 46px rgba(0, 0, 0, 0.36);
   --shadow-tight: 0 8px 22px rgba(0, 0, 0, 0.28);
@@ -70,7 +72,7 @@ body {
     width: 100%;
     height: 3px;
     content: "";
-    background: linear-gradient(90deg, var(--accent), rgba(100, 214, 170, 0.16));
+    background: linear-gradient(90deg, var(--control-orange), rgba(255, 90, 0, 0.14));
   }
 
   .dashboard-console-copy {
@@ -232,7 +234,7 @@ body {
   }
 
   .status-dot-live {
-    background: var(--accent);
+    background: var(--positive);
   }
 
   .status-dot-warn {
@@ -292,14 +294,14 @@ body {
   }
 
   .control-chip:hover {
-    border-color: var(--accent);
+    border-color: var(--control-orange);
     color: var(--text);
   }
 
   .control-chip-active {
-    border-color: var(--surface-pressed);
-    background: var(--surface-pressed);
-    color: #fff;
+    border-color: color-mix(in srgb, var(--control-orange) 72%, transparent);
+    background: color-mix(in srgb, var(--control-orange) 26%, var(--surface-strong));
+    color: #ffb17a;
   }
 
   .tab-strip {
@@ -314,12 +316,12 @@ body {
   }
 
   .tab-button:hover {
-    color: var(--text);
+    color: #ffb17a;
   }
 
   .tab-button-active {
-    background: var(--surface-pressed);
-    color: #fff;
+    background: color-mix(in srgb, var(--control-orange) 26%, var(--surface-strong));
+    color: #ffb17a;
     box-shadow: var(--shadow-tight);
   }
 
