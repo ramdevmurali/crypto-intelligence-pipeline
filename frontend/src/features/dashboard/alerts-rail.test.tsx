@@ -47,6 +47,20 @@ function renderSelectableAlert() {
   }
 }
 
+function renderAlertsRail(overrides: Partial<React.ComponentProps<typeof AlertsRail>> = {}) {
+  render(
+    <AlertsRail
+      errorMessage={null}
+      isError={false}
+      isLoading={false}
+      items={[]}
+      onSelectAlert={vi.fn()}
+      selectedAlertKey={null}
+      {...overrides}
+    />
+  )
+}
+
 describe('AlertsRail', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -189,5 +203,23 @@ describe('AlertsRail', () => {
 
     expect(onSelectAlert).toHaveBeenCalledOnce()
     expect(onSelectAlert).toHaveBeenCalledWith(alert)
+  })
+
+  it('renders the loading state', () => {
+    renderAlertsRail({ isLoading: true })
+
+    expect(screen.getByText('Loading alerts...')).toBeDefined()
+  })
+
+  it('renders the error state', () => {
+    renderAlertsRail({ errorMessage: 'stream unavailable', isError: true })
+
+    expect(screen.getByText('Failed to load alerts: stream unavailable')).toBeDefined()
+  })
+
+  it('renders the empty state', () => {
+    renderAlertsRail()
+
+    expect(screen.getByText('No alerts in current window.')).toBeDefined()
   })
 })
