@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Alert } from '../../lib/types'
@@ -131,5 +132,28 @@ describe('AlertsRail', () => {
     )
 
     expect(screen.getByText(`Headline: ${headline}`)).toBeDefined()
+  })
+
+  it('calls onSelectAlert when an alert row is clicked', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    const alert = makeAlert()
+    const onSelectAlert = vi.fn()
+
+    render(
+      <AlertsRail
+        errorMessage={null}
+        isError={false}
+        isLoading={false}
+        items={[alert]}
+        onSelectAlert={onSelectAlert}
+        selectedAlertKey={null}
+      />
+    )
+
+    await user.click(screen.getByRole('button'))
+
+    expect(onSelectAlert).toHaveBeenCalledOnce()
+    expect(onSelectAlert).toHaveBeenCalledWith(alert)
   })
 })
