@@ -83,4 +83,53 @@ describe('AlertsRail', () => {
 
     expect(screen.getByText('summarizing...')).toBeDefined()
   })
+
+  it('renders return and threshold values', () => {
+    render(
+      <AlertsRail
+        errorMessage={null}
+        isError={false}
+        isLoading={false}
+        items={[makeAlert({ return: 0.024, threshold: 0.02 })]}
+        onSelectAlert={vi.fn()}
+        selectedAlertKey={null}
+      />
+    )
+
+    expect(screen.getByText('return 2.40%')).toBeDefined()
+    expect(screen.getByText('threshold 2.00%')).toBeDefined()
+  })
+
+  it('renders sentiment and headline freshness when available', () => {
+    render(
+      <AlertsRail
+        errorMessage={null}
+        isError={false}
+        isLoading={false}
+        items={[makeAlert({ sentiment: 0.12, headline_fresh: true })]}
+        onSelectAlert={vi.fn()}
+        selectedAlertKey={null}
+      />
+    )
+
+    expect(screen.getByText('sentiment positive')).toBeDefined()
+    expect(screen.getByText('headline fresh')).toBeDefined()
+  })
+
+  it('renders headline context when present', () => {
+    const headline = 'Institutional buying reported across major exchanges.'
+
+    render(
+      <AlertsRail
+        errorMessage={null}
+        isError={false}
+        isLoading={false}
+        items={[makeAlert({ headline })]}
+        onSelectAlert={vi.fn()}
+        selectedAlertKey={null}
+      />
+    )
+
+    expect(screen.getByText(`Headline: ${headline}`)).toBeDefined()
+  })
 })
