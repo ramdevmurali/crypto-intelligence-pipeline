@@ -138,6 +138,10 @@ Dashboard overview:
 
 ![Dashboard overview](docs/assets/dashboard-overview.png)
 
+Signal trends:
+
+![Signal trends](docs/assets/signals.png)
+
 Alerts feed:
 
 ![Alerts feed](docs/assets/alerts-feed.png)

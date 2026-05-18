@@ -42,7 +42,7 @@ export function DashboardPage() {
   return (
     <main className="app-frame">
       <header className="dashboard-console-header">
-        <p className="dashboard-eyebrow">Realtime Crypto Narrato</p>
+        <p className="dashboard-eyebrow">Crypto Intelligence Console</p>
         <div className="dashboard-console-copy mt-0.5">
           <div>
             <h1 className="dashboard-title">Market Intelligence Dashboard</h1>
