@@ -82,7 +82,6 @@ npm run build
 npm run lint
 ```
 
-See `docs/frontend_testing_plan.md` for the test cheat sheet and planned next coverage.
 
 ## Notes
 - Frontend should preserve backend/API contracts and avoid duplicating backend/processor logic.

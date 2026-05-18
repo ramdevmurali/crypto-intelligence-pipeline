@@ -38,7 +38,6 @@ Related docs:
 - [`docs/anomaly_diagnostics.md`](docs/anomaly_diagnostics.md)
 - [`docs/backend_tests.md`](docs/backend_tests.md)
 - [`docs/processor_tests.md`](docs/processor_tests.md)
-- [`docs/frontend_testing_plan.md`](docs/frontend_testing_plan.md)
 
 ## Key features
 - Binance WebSocket price ingestion for BTC and ETH.
