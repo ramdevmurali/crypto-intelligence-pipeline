@@ -222,6 +222,13 @@ function labelForSeries(name?: string): string {
   return name ?? ''
 }
 
+function legendLabel(value: unknown): string | null {
+  if (value === 'btcusdt' || value === 'ethusdt') {
+    return labelForSeries(value)
+  }
+  return null
+}
+
 function ChartTooltip({
   active,
   payload,
@@ -320,9 +327,10 @@ export function MarketOverviewChart({
           <Tooltip content={<ChartTooltip mode={chartMode} />} />
           <Legend
             iconType="plainline"
-            formatter={(value) => (
-              <span className="dashboard-muted text-xs">{labelForSeries(String(value))}</span>
-            )}
+            formatter={(value) => {
+              const label = legendLabel(value)
+              return label ? <span className="dashboard-muted text-xs">{label}</span> : null
+            }}
           />
 
           {selectedSymbols.includes('btcusdt') && (
