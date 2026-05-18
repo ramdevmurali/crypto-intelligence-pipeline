@@ -8,27 +8,15 @@ The project is built to show backend and streaming-systems engineering: async in
 
 Dashboard overview:
 
-<!-- Add screenshot here: docs/assets/dashboard-overview.png -->
-
-```md
 ![Dashboard overview](docs/assets/dashboard-overview.png)
-```
 
 Alerts feed:
 
-<!-- Add screenshot here: docs/assets/alerts-feed.png -->
-
-```md
 ![Alerts feed](docs/assets/alerts-feed.png)
-```
 
 Headlines feed:
 
-<!-- Add screenshot here: docs/assets/headlines-feed.png -->
-
-```md
 ![Headlines feed](docs/assets/headlines-feed.png)
-```
 
 ## Why I built this
 
