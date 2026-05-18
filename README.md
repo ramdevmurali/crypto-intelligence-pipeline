@@ -136,19 +136,19 @@ npm run lint
 ## Demo
 Dashboard overview:
 
-![Dashboard overview](docs/assets/dashboard-overview.png)
+![Dashboard overview](docs/assets/dashboard-overview-v2.png)
 
 Signal trends:
 
-![Signal trends](docs/assets/signals.png)
+![Signal trends](docs/assets/signals-v2.png)
 
 Alerts feed:
 
-![Alerts feed](docs/assets/alerts-feed.png)
+![Alerts feed](docs/assets/alerts-feed-v2.png)
 
 Headlines feed:
 
-![Headlines feed](docs/assets/headlines-feed.png)
+![Headlines feed](docs/assets/headlines-feed-v2.png)
 
 ## Known limitations
 - This is not a trading system and does not place orders.
