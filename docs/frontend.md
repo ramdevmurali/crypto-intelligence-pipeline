@@ -1,91 +1,112 @@
-# Frontend (React dashboard) cheat sheet
+# Frontend
 
-## What it is
-- Compact operational console for the crypto anomaly pipeline.
-- Shows live prices, rolling signals, anomaly alerts, headlines, stream health, and per-symbol KPIs.
-- Read-only client; all data comes from the backend API and SSE-style polling paths.
-- Main purpose is to make the backend/processor story visible without becoming a large product UI.
+React dashboard for the Real-Time Crypto Intelligence Pipeline. It visualizes backend output from the price, metrics, alerts, headlines, summary, and sentiment paths. It does not own the core streaming or anomaly logic.
 
 ## Stack
-- React + Vite + TypeScript.
-- Tailwind CSS for styling.
-- TanStack Query for API fetching and refresh behavior.
-- Recharts for price and signal charts.
-- Vitest + React Testing Library for lean component tests.
+- React
+- Vite
+- TypeScript
+- Tailwind CSS
+- TanStack Query
+- Recharts
+- Vitest + Testing Library
 
-## Main files
-- `frontend/src/app/dashboard-page.tsx`: dashboard shell, selected symbol/window/tab state, selected alert state.
-- `frontend/src/features/dashboard/use-dashboard-data.ts`: data orchestration and dashboard-ready props.
-- `frontend/src/features/dashboard/dashboard-controls.tsx`: symbol and window controls.
-- `frontend/src/features/dashboard/market-overview-chart.tsx`: price chart.
-- `frontend/src/features/dashboard/signal-trend-chart.tsx`: return/volatility signal chart.
-- `frontend/src/features/dashboard/live-status-rail.tsx`: stream and freshness health.
-- `frontend/src/features/dashboard/kpi-stack.tsx`: BTC/ETH KPI cards.
-- `frontend/src/features/dashboard/alerts-rail.tsx`: anomaly event feed.
-- `frontend/src/features/dashboard/headlines-rail.tsx`: headline event feed.
-- `frontend/src/index.css`: global theme tokens and shared dashboard classes.
+## Purpose
+- Show live BTC/ETH prices and recent price movement.
+- Show return and volatility signal trends from processor metrics.
+- Show anomaly alerts with summaries, thresholds, sentiment, and headline context.
+- Show recent headlines with source, freshness, sentiment, and outbound links.
+- Show per-symbol KPI freshness and backend stream health.
+- Make the backend/streaming pipeline observable from a browser without duplicating backend logic.
 
-## Data it consumes
-Backend endpoints are defined in `backend/app/main.py` and served from TimescaleDB:
-- `GET /prices?symbol=&limit=`: recent price ticks.
-- `GET /metrics/latest?symbol=`: latest per-symbol market metrics.
-- `GET /alerts?limit=&since=`: recent anomaly alerts.
-- `GET /headlines?limit=&since=`: recent headlines with sentiment.
-- `GET /health`: backend and DB health.
+## Architecture
+Backend REST and SSE-style endpoints feed small feature hooks. Those hooks fetch prices, metrics, alerts, and headlines. `useDashboardData` coordinates the fetched data into stable dashboard props. UI components render charts, rails, controls, and status panels from those props.
 
-Frontend API types live under `frontend/src/lib/types`.
-
-## Dashboard behavior
-- Symbol filter: `Both`, `BTC`, `ETH`.
-- Window filter: `5m`, `15m`, `30m` for chart display range.
-- Tab stack: `Market`, `Signals`, `Alerts`, `Headlines`.
-- When both symbols are selected, market chart data is normalized to compare movement.
-- When a single symbol is selected, chart values use raw symbol data.
-- Alert summaries can be `null`; UI renders `summarizing...` until the summary sidecar backfills text.
-- Freshness labels update locally inside the small UI components that display age text.
-
-## Visual direction
-- Dark operational dashboard, not a consumer trading app.
-- AMOLED/charcoal background with orange action accents.
-- BTC keeps orange identity; ETH keeps blue identity.
-- Semantic color is reserved for meaning: live/positive, warning/degraded, danger/negative.
-- Avoid broad decorative clutter, neon styling, and heavy product-marketing treatment.
-
-## How to run
-From `infra/`:
-```
-docker compose --env-file .env up -d frontend backend processor summary-sidecar sentiment-sidecar redpanda timescaledb redis
+```text
+[FastAPI REST/SSE]
+        |
+        v
+[feature hooks]
+        |
+        v
+[useDashboardData]
+        |
+        v
+[dashboard controls / charts / panels]
 ```
 
-Frontend local dev:
+## Key components
+- `DashboardControls`: symbol and window selection.
+- `MarketOverviewChart`: price trajectory chart, with normalized comparison when both symbols are selected.
+- `SignalTrendChart`: return and volatility z-score chart panels.
+- `AlertsRail`: anomaly event feed with summary, return, threshold, sentiment, headline context, and selection behavior.
+- `HeadlinesRail`: headline event feed with source, sentiment, relative age, and external links.
+- `KPIStack`: compact BTC/ETH metric cards.
+- `LiveStatusRail`: stream health, refresh times, and fallback visibility.
+- `useDashboardData`: frontend orchestration layer that adapts API/hook output into dashboard-ready props.
+
+## Data flow
+```text
+Backend API/SSE -> feature hooks -> useDashboardData -> dashboard panels/charts
 ```
+
+The frontend preserves backend/API contracts and keeps processor-derived logic out of the UI. Chart data is memoized from fetched data, selected symbols, and window selection. Freshness timers live only inside small components that display age text, so chart props do not change every second just because time passes.
+
+## Testing
+Frontend tests are intentionally lean. They protect API-contract rendering and key interactions rather than visual styling.
+
+Current coverage focuses on:
+- `AlertsRail`: metadata, summaries, pending summaries, metrics, headline context, click/keyboard selection, and loading/error/empty states.
+- `HeadlinesRail`: source, sentiment, relative age, title rendering, external links, safe link attributes, missing-url plain text, and loading/error/empty states.
+
+Intentionally not tested for now:
+- Exact Tailwind classes, colors, spacing, or card styling.
+- Visual snapshots.
+- Recharts internals.
+- Browser E2E workflows.
+
+## Running locally
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Default local URLs:
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
-
-## Tests
-Frontend test coverage is intentionally lean and behavior-focused.
-
-Current coverage:
-- `AlertsRail`: alert metadata, summaries, pending summaries, anomaly metrics, headline context, selection behavior, keyboard activation, and loading/error/empty states.
-- `HeadlinesRail`: source, sentiment, age, title, external links, safe link attributes, missing-url plain text, and loading/error/empty states.
-
-Run from `frontend/`:
+Default local frontend URL:
+```text
+http://localhost:3000
 ```
+
+The dashboard expects the backend API to be available at the configured frontend API base URL.
+
+## Build, lint, and test
+Run from `frontend/`:
+
+```bash
 npm run test
 npm run build
 npm run lint
 ```
 
+## Docker
+Run from `infra/`:
 
-## Notes
-- Frontend should preserve backend/API contracts and avoid duplicating backend/processor logic.
-- Keep component boundaries only where they improve traceability.
-- Prefer small readable component tests over snapshots or visual assertions.
-- Do not test Recharts internals; extract pure helpers first if chart transform logic needs coverage.
-- The backend and processor remain the main engineering focus; the frontend exists to present that pipeline clearly.
+```bash
+docker compose --env-file .env up -d --build frontend
+```
+
+For full behavior, run the backend, processor, sidecars, Redpanda, TimescaleDB, and Redis as well.
+
+## Known limitations
+- No browser E2E tests yet.
+- Chart tests are intentionally light; Recharts rendering internals are not tested.
+- Full behavior depends on backend API shape and live services.
+- The frontend is read-only and does not provide operational controls for replay, DLQ handling, or processor management.
+
+## Related docs
+- [`../README.md`](../README.md)
+- [`architecture.md`](architecture.md)
+- [`backend.md`](backend.md)
+- [`processor.md`](processor.md)
+- [`backend_tests.md`](backend_tests.md)
+- [`processor_tests.md`](processor_tests.md)
