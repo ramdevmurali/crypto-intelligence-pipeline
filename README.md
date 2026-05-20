@@ -52,6 +52,13 @@ Related docs:
 - Probe, replay, migration, and runtime verification scripts.
 - React dashboard for prices, signals, alerts, headlines, KPIs, and service health.
 
+## Design choice: lightweight anomaly detection
+The anomaly path intentionally uses streaming math instead of a heavy model in the processor hot path. Each price tick updates rolling windows and computes returns, volatility, z-scores, percentile bands, and an attention score. Alerts are emitted from fixed threshold rules with cooldown handling.
+
+This keeps detection deterministic, low-latency, explainable, and easy to inspect. LLM summarization runs later in the summary sidecar after an alert is emitted, so model latency or failure does not block ingestion, metric computation, or alert publication.
+
+The goal is an explainable anomaly signal inside a resilient real-time pipeline, not a claim of predictive trading accuracy. Thresholds are operational defaults and can be tuned with historical backtesting.
+
 ## Running locally
 Prereqs: Docker, Docker Compose, Python 3.11+, Node 20+.
 
