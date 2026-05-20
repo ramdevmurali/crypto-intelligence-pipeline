@@ -132,6 +132,7 @@ function TrendMiniChart({
 }) {
   const data = buildFrames(dataBySymbol, field, selectedSymbols)
   const yDomain = resolveYDomain(field)
+  const visibleSymbols = SYMBOLS.filter((symbol) => selectedSymbols.includes(symbol))
 
   if (data.length === 0) {
     return (
@@ -171,32 +172,20 @@ function TrendMiniChart({
             <Tooltip content={<TrendTooltip />} />
             <ReferenceLine y={0} stroke="var(--stroke-strong)" strokeDasharray="4 4" />
 
-            {selectedSymbols.includes('btcusdt') && (
+            {visibleSymbols.map((symbol) => (
               <Line
+                key={symbol}
                 type="monotone"
-                dataKey="btcusdt"
-                name={symbolLabel('btcusdt')}
+                dataKey={symbol}
+                name={symbolLabel(symbol)}
                 dot={false}
                 connectNulls
-                stroke={symbolStroke('btcusdt')}
+                stroke={symbolStroke(symbol)}
                 strokeWidth={1.6}
                 isAnimationActive
                 animationDuration={220}
               />
-            )}
-            {selectedSymbols.includes('ethusdt') && (
-              <Line
-                type="monotone"
-                dataKey="ethusdt"
-                name={symbolLabel('ethusdt')}
-                dot={false}
-                connectNulls
-                stroke={symbolStroke('ethusdt')}
-                strokeWidth={1.6}
-                isAnimationActive
-                animationDuration={220}
-              />
-            )}
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>

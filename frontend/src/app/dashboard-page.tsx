@@ -19,6 +19,7 @@ const STACK_TABS: Array<{ value: DashboardStackTab; label: string; description: 
   { value: 'alerts', label: 'Alerts', description: 'Realtime anomaly stream' },
   { value: 'headlines', label: 'Headlines', description: 'Source, freshness and sentiment' },
 ]
+const STACK_PANEL_CLASS = 'min-w-full pr-0'
 
 function getAlertKey(alert: Alert): string {
   return `${alert.time}|${alert.symbol}|${alert.window}|${alert.direction}`
@@ -106,7 +107,7 @@ export function DashboardPage() {
               className="flex transition-transform duration-300 ease-out"
               style={{ transform: `translateX(-${activeStackIndex * 100}%)` }}
             >
-              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'market'}>
+              <div className={STACK_PANEL_CLASS} role="tabpanel" aria-hidden={activeStackTab !== 'market'}>
                 <article className="dashboard-card">
                   <header className="mb-1 flex items-center justify-between">
                     <div>
@@ -124,7 +125,7 @@ export function DashboardPage() {
                 </article>
               </div>
 
-              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'signals'}>
+              <div className={STACK_PANEL_CLASS} role="tabpanel" aria-hidden={activeStackTab !== 'signals'}>
                 <article className="dashboard-card">
                   <header className="mb-2">
                     <h2 className="dashboard-heading">Signal Trends</h2>
@@ -137,7 +138,7 @@ export function DashboardPage() {
                 </article>
               </div>
 
-              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'alerts'}>
+              <div className={STACK_PANEL_CLASS} role="tabpanel" aria-hidden={activeStackTab !== 'alerts'}>
                 <AlertsRail
                   items={dashboard.alerts.items}
                   isLoading={dashboard.alerts.isLoading}
@@ -148,7 +149,7 @@ export function DashboardPage() {
                 />
               </div>
 
-              <div className="min-w-full pr-0" role="tabpanel" aria-hidden={activeStackTab !== 'headlines'}>
+              <div className={STACK_PANEL_CLASS} role="tabpanel" aria-hidden={activeStackTab !== 'headlines'}>
                 <HeadlinesRail
                   items={dashboard.headlines.items}
                   isLoading={dashboard.headlines.isLoading}

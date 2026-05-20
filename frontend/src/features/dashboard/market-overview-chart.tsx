@@ -286,6 +286,7 @@ export function MarketOverviewChart({
   const data = transformFrames(rawFrames, chartMode)
   const frameLookup = buildFrameLookup(data)
   const normalizedDomain = resolveNormalizedDomain(window)
+  const visibleSymbols = SYMBOLS.filter((symbol) => selectedSymbols.includes(symbol))
   const alertDots = buildAlertDots(
     alertOverlay,
     selectedSymbols,
@@ -333,31 +334,19 @@ export function MarketOverviewChart({
             }}
           />
 
-          {selectedSymbols.includes('btcusdt') && (
+          {visibleSymbols.map((symbol) => (
             <Line
+              key={symbol}
               type="monotone"
-              dataKey="btcusdt"
+              dataKey={symbol}
               dot={false}
               isAnimationActive
               animationDuration={220}
-              name="btcusdt"
-              stroke={symbolStroke('btcusdt')}
+              name={symbol}
+              stroke={symbolStroke(symbol)}
               strokeWidth={1.8}
             />
-          )}
-
-          {selectedSymbols.includes('ethusdt') && (
-            <Line
-              type="monotone"
-              dataKey="ethusdt"
-              dot={false}
-              isAnimationActive
-              animationDuration={220}
-              name="ethusdt"
-              stroke={symbolStroke('ethusdt')}
-              strokeWidth={1.8}
-            />
-          )}
+          ))}
 
           <Scatter data={alertDots} legendType="none" shape={<AlertDotShape />} />
         </ComposedChart>
