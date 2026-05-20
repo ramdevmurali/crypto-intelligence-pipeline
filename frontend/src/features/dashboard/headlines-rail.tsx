@@ -1,35 +1,13 @@
 import { useEffect, useState } from 'react'
 
 import type { Headline } from '../../lib/types'
+import { ageSecondsFromIso, formatRelativeAge } from './ui-utils'
 
 type HeadlinesRailProps = {
   items: Headline[]
   isLoading: boolean
   isError: boolean
   errorMessage: string | null
-}
-
-function ageSec(value: string, nowMs: number): number | null {
-  const ts = Date.parse(value)
-  if (Number.isNaN(ts)) {
-    return null
-  }
-  return Math.max(0, Math.floor((nowMs - ts) / 1000))
-}
-
-function relativeAgeLabel(age: number | null): string {
-  if (age === null) {
-    return 'age n/a'
-  }
-  if (age < 60) {
-    return `${age}s ago`
-  }
-  const minutes = Math.floor(age / 60)
-  if (minutes < 60) {
-    return `${minutes}m ago`
-  }
-  const hours = Math.floor(minutes / 60)
-  return `${hours}h ago`
 }
 
 function sentimentTone(value: number | null): { className: string; label: string } {
@@ -67,7 +45,7 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
       {!isLoading && !isError && items.length > 0 && (
         <ul className="space-y-3">
           {items.slice(0, 8).map((headline) => {
-            const age = ageSec(headline.time, nowMs)
+            const age = ageSecondsFromIso(headline.time, nowMs)
             const sentiment = sentimentTone(headline.sentiment)
             const titleClass = 'text-sm font-medium leading-5 text-[color:var(--control-orange)] underline-offset-2 hover:underline'
             return (
@@ -85,7 +63,7 @@ export function HeadlinesRail({ items, isLoading, isError, errorMessage }: Headl
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <span className="font-semibold text-[color:var(--text-soft)]">{headline.source ?? 'unknown'}</span>
                       <span className={`meta-pill ${sentiment.className}`}>{sentiment.label}</span>
-                      <span className="dashboard-muted" title={headline.time}>{relativeAgeLabel(age)}</span>
+                      <span className="dashboard-muted" title={headline.time}>{formatRelativeAge(age)}</span>
                     </div>
                     {headline.url ? (
                       <a className={`mt-2 block ${titleClass}`} href={headline.url} rel="noreferrer noopener" target="_blank">

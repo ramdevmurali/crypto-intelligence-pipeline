@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { getHealthChipClass } from './ui-utils'
+import { getHealthChipClass, secondsSinceMs } from './ui-utils'
 import type { DashboardHealthState } from './types'
 
 type LiveStatusRailProps = {
@@ -36,10 +36,6 @@ function streamDotClass(isLive: boolean, isError: boolean): string {
     return 'status-dot-live'
   }
   return 'status-dot-warn'
-}
-
-function ageSec(value: number, nowMs: number): number {
-  return Math.max(0, Math.floor((nowMs - value) / 1000))
 }
 
 function computeHealthState({
@@ -97,7 +93,7 @@ export function LiveStatusRail({
       return null
     }
 
-    return ageSec(Math.max(...candidates), nowMs)
+    return secondsSinceMs(Math.max(...candidates), nowMs)
   }, [alertsLastEventAt, headlinesLastEventAt, lastMetricUpdate, lastPriceUpdate, nowMs])
 
   const healthState = computeHealthState({

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import type { Alert } from '../../lib/types'
-import { formatPct } from './ui-utils'
+import { ageSecondsFromIso, formatPct, formatRelativeAge } from './ui-utils'
 
 type AlertsRailProps = {
   items: Alert[]
@@ -21,29 +21,6 @@ function formatSummary(value: string | null): string {
     return 'summarizing...'
   }
   return value.trim().replace(/\s+/g, ' ')
-}
-
-function ageSec(value: string, nowMs: number): number | null {
-  const ts = Date.parse(value)
-  if (Number.isNaN(ts)) {
-    return null
-  }
-  return Math.max(0, Math.floor((nowMs - ts) / 1000))
-}
-
-function relativeAgeLabel(age: number | null): string {
-  if (age === null) {
-    return 'age n/a'
-  }
-  if (age < 60) {
-    return `${age}s ago`
-  }
-  const minutes = Math.floor(age / 60)
-  if (minutes < 60) {
-    return `${minutes}m ago`
-  }
-  const hours = Math.floor(minutes / 60)
-  return `${hours}h ago`
 }
 
 function metaClass(selected: boolean): string {
@@ -139,7 +116,7 @@ export function AlertsRail({
             const key = alertKey(alert)
             const selected = selectedAlertKey === key
             const direction = directionTone(alert.direction)
-            const age = ageSec(alert.time, nowMs)
+            const age = ageSecondsFromIso(alert.time, nowMs)
             const sentiment = sentimentTone(alert.sentiment)
             const headlineFreshness = headlineFreshnessLabel(alert.headline_fresh)
             const mutedClass = selected ? 'text-white/70' : 'dashboard-muted'
@@ -174,7 +151,7 @@ export function AlertsRail({
                       <span className={metaClass(selected)}>{alert.symbol}</span>
                       <span className={metaClass(selected)}>{alert.window}</span>
                       <span className={metaClass(selected)}>{direction.label}</span>
-                      <span className={mutedClass}>{relativeAgeLabel(age)}</span>
+                      <span className={mutedClass}>{formatRelativeAge(age)}</span>
                     </div>
 
                     <p className={`mt-2 text-sm leading-6 ${bodyClass}`}>{formatSummary(alert.summary)}</p>

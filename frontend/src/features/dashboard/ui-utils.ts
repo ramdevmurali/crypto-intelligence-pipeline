@@ -17,6 +17,40 @@ export function formatIsoClock(value: string): string {
   return formatClock(ts)
 }
 
+export function secondsSinceMs(value: number, nowMs: number): number {
+  return Math.max(0, Math.floor((nowMs - value) / 1000))
+}
+
+export function ageSecondsFromIso(value: string, nowMs: number): number | null {
+  const ts = Date.parse(value)
+  if (Number.isNaN(ts)) {
+    return null
+  }
+  return secondsSinceMs(ts, nowMs)
+}
+
+export function formatRelativeAge(age: number | null): string {
+  if (age === null) {
+    return 'age n/a'
+  }
+  if (age < 60) {
+    return `${age}s ago`
+  }
+  const minutes = Math.floor(age / 60)
+  if (minutes < 60) {
+    return `${minutes}m ago`
+  }
+  const hours = Math.floor(minutes / 60)
+  return `${hours}h ago`
+}
+
+export function formatFreshnessAge(ts: number | null, nowMs: number): string {
+  if (ts === null) {
+    return 'n/a'
+  }
+  return `${secondsSinceMs(ts, nowMs)}s`
+}
+
 export function symbolLabel(symbol: SymbolKey): string {
   if (symbol === 'btcusdt') {
     return 'BTC'

@@ -102,13 +102,6 @@ body {
     @apply rounded-xl border p-3;
   }
 
-  .dashboard-card-compact {
-    background: var(--surface);
-    border-color: var(--stroke);
-    box-shadow: var(--shadow-tight);
-    @apply rounded-xl border px-3 py-3;
-  }
-
   .dashboard-subcard {
     background: var(--surface-soft);
     border-color: var(--stroke);
