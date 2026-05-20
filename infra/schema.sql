@@ -1,4 +1,4 @@
--- Timescale schema for realtime-crypto-narrato
+-- Timescale schema for real-time crypto intelligence pipeline
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 
 -- Raw price ticks
@@ -68,7 +68,9 @@ CREATE TABLE IF NOT EXISTS anomalies (
     headline    TEXT,
     sentiment   DOUBLE PRECISION,
     summary     TEXT,
+    alert_published BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (time, symbol, window_name)
 );
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS alert_published BOOLEAN DEFAULT TRUE;
 SELECT create_hypertable('anomalies', 'time', if_not_exists => TRUE);
 CREATE INDEX IF NOT EXISTS idx_anomalies_symbol_time_desc ON anomalies(symbol, time DESC);
