@@ -7,6 +7,7 @@
 
 ## Endpoints
 - `GET /health` — pings DB (`SELECT 1`); 200 on OK, 503 on failure.
+- `GET /diagnostics/pipeline` — read-only DB diagnostics for pipeline freshness and recent row counts; does not inspect Kafka.
 - `GET /prices?symbol=&limit=` — latest ticks (desc). Params: `symbol` (required, case-insensitive), `limit` (default 200).
 - `GET /metrics/latest?symbol=` — most recent rollup for a symbol; 404 if none.
 - `GET /headlines?limit=&since=` — recent headlines with sentiment. Params: `limit` (default 20), `since` (optional ISO 8601).

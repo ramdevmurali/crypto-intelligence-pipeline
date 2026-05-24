@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     price_topic: str = "prices"
     news_topic: str = "news"
     alerts_topic: str = "alerts"
+    symbols_raw: str = "btcusdt,ethusdt"
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     cors_allowed_origins_raw: str = "http://localhost:5173"
@@ -59,6 +60,10 @@ class Settings(BaseSettings):
     @property
     def kafka_brokers(self) -> List[str]:
         return _split_csv(self.kafka_brokers_raw)
+
+    @property
+    def symbols(self) -> List[str]:
+        return [symbol.lower() for symbol in _split_csv(self.symbols_raw)]
 
     @property
     def cors_allowed_origins(self) -> List[str]:

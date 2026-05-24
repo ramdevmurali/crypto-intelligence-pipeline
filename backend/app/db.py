@@ -1,5 +1,5 @@
 import asyncpg
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Optional, TypedDict
 
@@ -80,6 +80,90 @@ async def fetch_latest_metrics(symbol: str) -> asyncpg.Record | None:
         LIMIT 1
     """
     return await pool.fetchrow(query, symbol)
+
+
+async def fetch_latest_price_times(symbols: list[str] | None = None) -> dict[str, datetime]:
+    pool = await get_pool()
+    if symbols:
+        rows = await pool.fetch(
+            """
+            SELECT symbol, max(time) AS latest_time
+            FROM prices
+            WHERE symbol = ANY($1::text[])
+            GROUP BY symbol
+            """,
+            symbols,
+        )
+        return {row["symbol"]: row["latest_time"] for row in rows}
+    rows = await pool.fetch(
+        """
+        SELECT symbol, max(time) AS latest_time
+        FROM prices
+        GROUP BY symbol
+        """
+    )
+    return {row["symbol"]: row["latest_time"] for row in rows}
+
+
+async def fetch_latest_metric_times(symbols: list[str] | None = None) -> dict[str, datetime]:
+    pool = await get_pool()
+    if symbols:
+        rows = await pool.fetch(
+            """
+            SELECT symbol, max(time) AS latest_time
+            FROM metrics
+            WHERE symbol = ANY($1::text[])
+            GROUP BY symbol
+            """,
+            symbols,
+        )
+        return {row["symbol"]: row["latest_time"] for row in rows}
+    rows = await pool.fetch(
+        """
+        SELECT symbol, max(time) AS latest_time
+        FROM metrics
+        GROUP BY symbol
+        """
+    )
+    return {row["symbol"]: row["latest_time"] for row in rows}
+
+
+async def fetch_latest_headline_time() -> datetime | None:
+    pool = await get_pool()
+    return await pool.fetchval("SELECT max(time) FROM headlines")
+
+
+async def fetch_latest_alert_time() -> datetime | None:
+    pool = await get_pool()
+    return await pool.fetchval("SELECT max(time) FROM anomalies")
+
+
+async def fetch_pipeline_counts(now: datetime) -> dict[str, dict[str, int]]:
+    pool = await get_pool()
+    windows = {
+        "15m": now - timedelta(minutes=15),
+        "1h": now - timedelta(hours=1),
+    }
+    counts: dict[str, dict[str, int]] = {}
+    async with pool.acquire() as conn:
+        for label, since in windows.items():
+            row = await conn.fetchrow(
+                """
+                SELECT
+                    (SELECT count(*) FROM prices WHERE time >= $1) AS prices,
+                    (SELECT count(*) FROM metrics WHERE time >= $1) AS metrics,
+                    (SELECT count(*) FROM headlines WHERE time >= $1) AS headlines,
+                    (SELECT count(*) FROM anomalies WHERE time >= $1) AS alerts
+                """,
+                since,
+            )
+            counts[label] = {
+                "prices": row["prices"],
+                "metrics": row["metrics"],
+                "headlines": row["headlines"],
+                "alerts": row["alerts"],
+            }
+    return counts
 
 
 async def fetch_headlines(limit: int = 20, since: datetime | None = None) -> list[HeadlineRow]:

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 import uvicorn
 
@@ -9,6 +10,7 @@ import logging
 
 from .config import settings
 from . import db
+from .diagnostics import build_down_diagnostics, build_pipeline_diagnostics, utc_now
 from .streams import alerts_event_generator, headlines_event_generator, serialize_alert_row
 from .time_utils import parse_since
 
@@ -41,6 +43,29 @@ async def health():
         return {"status": "ok", "db": val}
     except Exception as exc:  # pragma: no cover
         raise HTTPException(status_code=503, detail=f"db_unhealthy: {exc}")
+
+
+@app.get("/diagnostics/pipeline")
+async def pipeline_diagnostics():
+    now = utc_now()
+    try:
+        latest_prices = await db.fetch_latest_price_times(settings.symbols)
+        latest_metrics = await db.fetch_latest_metric_times(settings.symbols)
+        latest_headline = await db.fetch_latest_headline_time()
+        latest_alert = await db.fetch_latest_alert_time()
+        counts = await db.fetch_pipeline_counts(now)
+    except Exception as exc:
+        return JSONResponse(status_code=503, content=build_down_diagnostics(str(exc), now=now))
+
+    return build_pipeline_diagnostics(
+        latest_prices=latest_prices,
+        latest_metrics=latest_metrics,
+        latest_headline=latest_headline,
+        latest_alert=latest_alert,
+        counts=counts,
+        symbols=settings.symbols,
+        now=now,
+    )
 
 
 @app.get("/prices")
