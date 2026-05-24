@@ -1,15 +1,22 @@
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal
 
 FreshnessStatus = Literal["ok", "degraded", "stale", "down"]
 PipelineStatus = Literal["ok", "degraded", "stale", "down"]
 
-PRICE_OK_SEC = 15
-PRICE_STALE_SEC = 60
-METRIC_OK_SEC = 20
-METRIC_STALE_SEC = 90
-HEADLINE_OK_SEC = 30 * 60
-HEADLINE_STALE_SEC = 2 * 60 * 60
+
+@dataclass(frozen=True)
+class FreshnessPolicy:
+    ok_sec: int | None
+    stale_sec: int | None
+    affects_status: bool = True
+
+
+PRICE_POLICY = FreshnessPolicy(ok_sec=15, stale_sec=60)
+METRIC_POLICY = FreshnessPolicy(ok_sec=20, stale_sec=90)
+HEADLINE_POLICY = FreshnessPolicy(ok_sec=30 * 60, stale_sec=2 * 60 * 60)
+ALERT_POLICY = FreshnessPolicy(ok_sec=None, stale_sec=None, affects_status=False)
 
 
 def utc_now() -> datetime:
@@ -31,36 +38,35 @@ def age_seconds(value: datetime | None, now: datetime) -> int | None:
     return max(0, int((now - ts).total_seconds()))
 
 
-def classify_age(age_sec: int | None, *, ok_sec: int, stale_sec: int) -> FreshnessStatus:
+def classify_age(age_sec: int | None, policy: FreshnessPolicy) -> FreshnessStatus:
+    if not policy.affects_status:
+        return "ok"
     if age_sec is None:
         return "stale"
-    if age_sec <= ok_sec:
+    if policy.ok_sec is not None and age_sec <= policy.ok_sec:
         return "ok"
-    if age_sec <= stale_sec:
+    if policy.stale_sec is not None and age_sec <= policy.stale_sec:
         return "degraded"
     return "stale"
 
 
-def freshness_entry(value: datetime | None, now: datetime, *, ok_sec: int, stale_sec: int) -> dict:
+def freshness_entry(value: datetime | None, now: datetime, policy: FreshnessPolicy) -> dict:
     ts = coerce_utc(value)
     age_sec = age_seconds(ts, now)
     return {
         "latest_time": ts.isoformat() if ts else None,
         "age_sec": age_sec,
-        "status": classify_age(age_sec, ok_sec=ok_sec, stale_sec=stale_sec),
+        "status": classify_age(age_sec, policy),
     }
 
 
 def alert_freshness_entry(value: datetime | None, now: datetime) -> dict:
-    ts = coerce_utc(value)
-    return {
-        "latest_time": ts.isoformat() if ts else None,
-        "age_sec": age_seconds(ts, now),
-        "status": "ok",
-    }
+    return freshness_entry(value, now, ALERT_POLICY)
 
 
-def reason_for(scope: str, entry: dict) -> str | None:
+def reason_for(scope: str, entry: dict, policy: FreshnessPolicy) -> str | None:
+    if not policy.affects_status:
+        return None
     status = entry["status"]
     if status == "ok":
         return None
@@ -70,6 +76,8 @@ def reason_for(scope: str, entry: dict) -> str | None:
 
 
 def aggregate_status(reasons: list[str]) -> PipelineStatus:
+    if any(reason.startswith("db_error:") for reason in reasons):
+        return "down"
     if any(reason.endswith("_stale") or reason.endswith("_missing") for reason in reasons):
         return "stale"
     if reasons:
@@ -97,20 +105,18 @@ def build_pipeline_diagnostics(
         price_entry = freshness_entry(
             latest_prices.get(symbol),
             current,
-            ok_sec=PRICE_OK_SEC,
-            stale_sec=PRICE_STALE_SEC,
+            PRICE_POLICY,
         )
         metric_entry = freshness_entry(
             latest_metrics.get(symbol),
             current,
-            ok_sec=METRIC_OK_SEC,
-            stale_sec=METRIC_STALE_SEC,
+            METRIC_POLICY,
         )
         price_freshness[symbol] = price_entry
         metric_freshness[symbol] = metric_entry
 
-        price_reason = reason_for(f"prices.{symbol}", price_entry)
-        metric_reason = reason_for(f"metrics.{symbol}", metric_entry)
+        price_reason = reason_for(f"prices.{symbol}", price_entry, PRICE_POLICY)
+        metric_reason = reason_for(f"metrics.{symbol}", metric_entry, METRIC_POLICY)
         if price_reason:
             reasons.append(price_reason)
         if metric_reason:
@@ -123,10 +129,9 @@ def build_pipeline_diagnostics(
     headline_entry = freshness_entry(
         latest_headline,
         current,
-        ok_sec=HEADLINE_OK_SEC,
-        stale_sec=HEADLINE_STALE_SEC,
+        HEADLINE_POLICY,
     )
-    headline_reason = reason_for("headlines", headline_entry)
+    headline_reason = reason_for("headlines", headline_entry, HEADLINE_POLICY)
     if headline_reason:
         reasons.append(headline_reason)
 

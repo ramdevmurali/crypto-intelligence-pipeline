@@ -3,10 +3,33 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
 from backend.app import db, main
-from backend.app.diagnostics import build_pipeline_diagnostics
+from backend.app.diagnostics import (
+    HEADLINE_POLICY,
+    METRIC_POLICY,
+    PRICE_POLICY,
+    build_pipeline_diagnostics,
+    classify_age,
+)
 
 
 NOW = datetime(2026, 5, 24, 8, 0, 0, tzinfo=timezone.utc)
+
+
+def test_freshness_status_boundaries():
+    assert classify_age(PRICE_POLICY.ok_sec, PRICE_POLICY) == "ok"
+    assert classify_age(PRICE_POLICY.ok_sec + 1, PRICE_POLICY) == "degraded"
+    assert classify_age(PRICE_POLICY.stale_sec, PRICE_POLICY) == "degraded"
+    assert classify_age(PRICE_POLICY.stale_sec + 1, PRICE_POLICY) == "stale"
+
+    assert classify_age(METRIC_POLICY.ok_sec, METRIC_POLICY) == "ok"
+    assert classify_age(METRIC_POLICY.ok_sec + 1, METRIC_POLICY) == "degraded"
+    assert classify_age(METRIC_POLICY.stale_sec, METRIC_POLICY) == "degraded"
+    assert classify_age(METRIC_POLICY.stale_sec + 1, METRIC_POLICY) == "stale"
+
+    assert classify_age(HEADLINE_POLICY.ok_sec, HEADLINE_POLICY) == "ok"
+    assert classify_age(HEADLINE_POLICY.ok_sec + 1, HEADLINE_POLICY) == "degraded"
+    assert classify_age(HEADLINE_POLICY.stale_sec, HEADLINE_POLICY) == "degraded"
+    assert classify_age(HEADLINE_POLICY.stale_sec + 1, HEADLINE_POLICY) == "stale"
 
 
 def test_build_pipeline_diagnostics_ok():
@@ -59,6 +82,74 @@ def test_build_pipeline_diagnostics_stale_reasons():
     assert "prices.btcusdt_stale" in body["reasons"]
     assert "metrics.btcusdt_missing" in body["reasons"]
     assert "headlines_stale" in body["reasons"]
+
+
+def test_build_pipeline_diagnostics_degraded_reasons():
+    body = build_pipeline_diagnostics(
+        latest_prices={"btcusdt": NOW - timedelta(seconds=16)},
+        latest_metrics={"btcusdt": NOW - timedelta(seconds=21)},
+        latest_headline=NOW - timedelta(minutes=31),
+        latest_alert=None,
+        counts={
+            "15m": {"prices": 10, "metrics": 10, "headlines": 1, "alerts": 0},
+            "1h": {"prices": 40, "metrics": 40, "headlines": 4, "alerts": 0},
+        },
+        symbols=["btcusdt"],
+        now=NOW,
+    )
+
+    assert body["status"] == "degraded"
+    assert body["freshness"]["prices"]["btcusdt"]["status"] == "degraded"
+    assert body["freshness"]["metrics"]["btcusdt"]["status"] == "degraded"
+    assert body["freshness"]["headlines"]["status"] == "degraded"
+    assert body["reasons"] == [
+        "prices.btcusdt_degraded",
+        "metrics.btcusdt_degraded",
+        "headlines_degraded",
+    ]
+
+
+def test_build_pipeline_diagnostics_missing_core_streams_are_stale():
+    body = build_pipeline_diagnostics(
+        latest_prices={},
+        latest_metrics={},
+        latest_headline=None,
+        latest_alert=None,
+        counts={
+            "15m": {"prices": 0, "metrics": 0, "headlines": 0, "alerts": 0},
+            "1h": {"prices": 0, "metrics": 0, "headlines": 0, "alerts": 0},
+        },
+        symbols=["btcusdt"],
+        now=NOW,
+    )
+
+    assert body["status"] == "stale"
+    assert body["freshness"]["prices"]["btcusdt"]["status"] == "stale"
+    assert body["freshness"]["metrics"]["btcusdt"]["status"] == "stale"
+    assert body["freshness"]["headlines"]["status"] == "stale"
+    assert "prices.btcusdt_missing" in body["reasons"]
+    assert "metrics.btcusdt_missing" in body["reasons"]
+    assert "headlines_missing" in body["reasons"]
+
+
+def test_build_pipeline_diagnostics_alerts_are_informational():
+    body = build_pipeline_diagnostics(
+        latest_prices={"btcusdt": NOW - timedelta(seconds=3)},
+        latest_metrics={"btcusdt": NOW - timedelta(seconds=4)},
+        latest_headline=NOW - timedelta(minutes=5),
+        latest_alert=NOW - timedelta(days=3),
+        counts={
+            "15m": {"prices": 10, "metrics": 10, "headlines": 1, "alerts": 0},
+            "1h": {"prices": 40, "metrics": 40, "headlines": 4, "alerts": 0},
+        },
+        symbols=["btcusdt"],
+        now=NOW,
+    )
+
+    assert body["status"] == "ok"
+    assert body["freshness"]["alerts"]["status"] == "ok"
+    assert body["freshness"]["alerts"]["age_sec"] == 259200
+    assert body["reasons"] == []
 
 
 def test_pipeline_diagnostics_endpoint(monkeypatch):
