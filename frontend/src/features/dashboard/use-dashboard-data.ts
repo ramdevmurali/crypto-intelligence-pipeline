@@ -28,6 +28,7 @@ type UseDashboardDataOptions = {
 type UseDashboardDataResult = {
   selectedSymbols: SymbolKey[]
   marketStatus: MarketStatusCard[]
+  signalDetails: MetricSnapshot[]
   priceSeriesBySymbol: Record<SymbolKey, PriceSeriesPoint[]>
   metricSeriesBySymbol: Record<SymbolKey, MetricSeriesPoint[]>
   alertOverlay: AlertOverlayPoint[]
@@ -154,8 +155,20 @@ function toMetricSnapshot(item: LatestMetrics): MetricSnapshot | null {
     time: item.time,
     symbol,
     return_1m: toNumberOrNull(item.return_1m),
+    return_5m: toNumberOrNull(item.return_5m),
+    return_15m: toNumberOrNull(item.return_15m),
     return_z_ewma_1m: toNumberOrNull(item.return_z_ewma_1m),
+    return_z_ewma_5m: toNumberOrNull(item.return_z_ewma_5m),
+    return_z_ewma_15m: toNumberOrNull(item.return_z_ewma_15m),
     vol_z_1m: toNumberOrNull(item.vol_z_1m),
+    vol_z_5m: toNumberOrNull(item.vol_z_5m),
+    vol_z_15m: toNumberOrNull(item.vol_z_15m),
+    p05_return_1m: toNumberOrNull(item.p05_return_1m),
+    p05_return_5m: toNumberOrNull(item.p05_return_5m),
+    p05_return_15m: toNumberOrNull(item.p05_return_15m),
+    p95_return_1m: toNumberOrNull(item.p95_return_1m),
+    p95_return_5m: toNumberOrNull(item.p95_return_5m),
+    p95_return_15m: toNumberOrNull(item.p95_return_15m),
     attention: toNumberOrNull(item.attention),
   }
 }
@@ -374,9 +387,16 @@ export function useDashboardData(options: UseDashboardDataOptions): UseDashboard
     })
   }, [latestMetricsMap, priceSeriesBySymbol])
 
+  const signalDetails = useMemo<MetricSnapshot[]>(() => {
+    return selectedSymbols
+      .map((symbol) => latestMetricsMap.get(symbol) ?? null)
+      .filter((snapshot): snapshot is MetricSnapshot => snapshot !== null)
+  }, [latestMetricsMap, selectedSymbols])
+
   return {
     selectedSymbols,
     marketStatus,
+    signalDetails,
     priceSeriesBySymbol,
     metricSeriesBySymbol,
     alertOverlay,

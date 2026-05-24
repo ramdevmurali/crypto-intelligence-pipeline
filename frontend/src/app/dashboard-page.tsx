@@ -6,6 +6,7 @@ import { HeadlinesRail } from '../features/dashboard/headlines-rail'
 import { KPIStack } from '../features/dashboard/kpi-stack'
 import { LiveStatusRail } from '../features/dashboard/live-status-rail'
 import { MarketOverviewChart } from '../features/dashboard/market-overview-chart'
+import { SignalDetailsPanel } from '../features/dashboard/signal-details-panel'
 import { SignalTrendChart } from '../features/dashboard/signal-trend-chart'
 import { useDashboardData } from '../features/dashboard/use-dashboard-data'
 import type { SymbolFilter, TimeWindow } from '../features/dashboard/types'
@@ -135,6 +136,7 @@ export function DashboardPage() {
                     metricSeriesBySymbol={dashboard.metricSeriesBySymbol}
                     selectedSymbols={dashboard.selectedSymbols}
                   />
+                  <SignalDetailsPanel items={dashboard.signalDetails} />
                 </article>
               </div>
 
