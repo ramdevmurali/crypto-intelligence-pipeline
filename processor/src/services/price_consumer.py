@@ -19,6 +19,10 @@ def handle_price_message(proc: ProcessorState, msg) -> tuple[str, dict]:
                 extra={
                     "raw": msg.value,
                     "bad_price_messages": proc.bad_price_messages,
+                    "topic": msg.topic,
+                    "partition": msg.partition,
+                    "offset": msg.offset,
+                    "operation": "decode_price",
                 },
             )
         return "dlq", {"payload": msg.value}
@@ -36,6 +40,10 @@ def handle_price_message(proc: ProcessorState, msg) -> tuple[str, dict]:
                     "time": ts.isoformat(),
                     "last_seen": last_ts.isoformat() if last_ts else None,
                     "late_price_messages": proc.late_price_messages,
+                    "topic": msg.topic,
+                    "partition": msg.partition,
+                    "offset": msg.offset,
+                    "operation": "consume_price",
                 },
             )
         return "commit", {}
@@ -59,7 +67,15 @@ async def consume_prices(proc: ProcessorState) -> None:
                 telemetry.inc("price_dlq_send_failed")
                 telemetry.inc("price_dlq_failed")
                 log = getattr(proc, "log", get_logger(__name__))
-                log.warning("price_dlq_commit_skipped", extra={"offset": msg.offset})
+                log.warning(
+                    "price_dlq_commit_skipped",
+                    extra={
+                        "topic": msg.topic,
+                        "partition": msg.partition,
+                        "offset": msg.offset,
+                        "operation": "send_price_dlq",
+                    },
+                )
             continue
         if action == "commit":
             await proc.commit_msg(msg)
@@ -78,11 +94,31 @@ async def consume_prices(proc: ProcessorState) -> None:
                 telemetry.inc("price_dlq_send_failed")
                 telemetry.inc("price_dlq_failed")
                 log = getattr(proc, "log", get_logger(__name__))
-                log.warning("price_dlq_commit_skipped", extra={"offset": msg.offset})
+                log.warning(
+                    "price_dlq_commit_skipped",
+                    extra={
+                        "symbol": data["symbol"],
+                        "topic": msg.topic,
+                        "partition": msg.partition,
+                        "offset": msg.offset,
+                        "operation": "send_price_dlq",
+                    },
+                )
             continue
         except Exception as exc:
             log = getattr(proc, "log", get_logger(__name__))
-            log.error("price_pipeline_failed", extra={"error": str(exc), "symbol": data["symbol"]})
+            log.error(
+                "price_pipeline_failed",
+                extra={
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "symbol": data["symbol"],
+                    "topic": msg.topic,
+                    "partition": msg.partition,
+                    "offset": msg.offset,
+                    "operation": "process_price",
+                },
+            )
             telemetry.inc("price_pipeline_failed")
             telemetry.inc("price_dlq_sent")
             telemetry.inc("price_dlq")
@@ -92,7 +128,16 @@ async def consume_prices(proc: ProcessorState) -> None:
             else:
                 telemetry.inc("price_dlq_send_failed")
                 telemetry.inc("price_dlq_failed")
-                log.warning("price_dlq_commit_skipped", extra={"offset": msg.offset})
+                log.warning(
+                    "price_dlq_commit_skipped",
+                    extra={
+                        "symbol": data["symbol"],
+                        "topic": msg.topic,
+                        "partition": msg.partition,
+                        "offset": msg.offset,
+                        "operation": "send_price_dlq",
+                    },
+                )
             continue
 
         await proc.commit_msg(msg)

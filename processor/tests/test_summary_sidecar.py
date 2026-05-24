@@ -60,6 +60,26 @@ class FakeProducer:
         self.sent.append((topic, payload))
 
 
+class FakeLog:
+    def __init__(self):
+        self.infos = []
+        self.warnings = []
+        self.errors = []
+        self.exceptions = []
+
+    def info(self, key, extra=None):
+        self.infos.append((key, extra or {}))
+
+    def warning(self, key, extra=None):
+        self.warnings.append((key, extra or {}))
+
+    def error(self, key, extra=None):
+        self.errors.append((key, extra or {}))
+
+    def exception(self, key, extra=None):
+        self.exceptions.append((key, extra or {}))
+
+
 async def _run_summary_record(
     payload,
     monkeypatch,
@@ -71,6 +91,7 @@ async def _run_summary_record(
     pool=None,
     fetch_published=None,
     mark_published=None,
+    log=None,
 ):
     class FakeConsumer:
         def __init__(self):
@@ -117,7 +138,7 @@ async def _run_summary_record(
     consumer = consumer or FakeConsumer()
     producer = producer or FakeProducer()
     pool = pool or FakePool()
-    log = summary_sidecar.get_logger(__name__)
+    log = log or summary_sidecar.get_logger(__name__)
     ok = await summary_sidecar.process_summary_record(
         FakeMsg(),
         consumer,
@@ -409,17 +430,24 @@ async def test_summary_skips_publish_when_already_published(monkeypatch):
     base_metrics = MetricsRegistry(service_name="summary_sidecar")
     metrics = NamespacedMetricsRegistry(base_metrics, "summary")
     monkeypatch.setattr(summary_sidecar, "get_metrics", lambda *args, **kwargs: metrics)
+    log = FakeLog()
 
     ok, consumer, producer, pool = await _run_summary_record(
         payload,
         monkeypatch,
         fetch_published=published_true,
         mark_published=fail_mark,
+        log=log,
     )
     assert ok is True
     assert len(producer.sent) == 0
     assert len(pool.calls) == 1
     assert metrics.snapshot()["counters"].get("summary.summary_publish_skipped") == 1
+    skip_logs = [extra for key, extra in log.infos if key == "summary_alert_already_published"]
+    assert skip_logs
+    assert skip_logs[0]["event_id"] == "2026-01-27T12:00:00+00:00:btcusdt:1m"
+    assert skip_logs[0]["topic"] == settings.alerts_topic
+    assert skip_logs[0]["operation"] == "publish_summary_alert"
 
 
 @pytest.mark.asyncio

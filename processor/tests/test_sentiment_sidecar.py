@@ -71,6 +71,22 @@ class FakeMsg:
         self.value = payload
 
 
+class FakeLog:
+    def __init__(self):
+        self.infos = []
+        self.warnings = []
+        self.errors = []
+
+    def info(self, key, extra=None):
+        self.infos.append((key, extra or {}))
+
+    def warning(self, key, extra=None):
+        self.warnings.append((key, extra or {}))
+
+    def error(self, key, extra=None):
+        self.errors.append((key, extra or {}))
+
+
 @pytest.mark.asyncio
 async def test_commit_message_uses_non_null_metadata():
     class CommitConsumer:
@@ -160,6 +176,46 @@ async def _run_sentiment_flow(messages, consumer, producer, pool):
         metrics,
     )
     return fallback_used, metrics
+
+
+@pytest.mark.asyncio
+async def test_sentiment_publish_log_includes_event_id(monkeypatch):
+    pool = FakePool()
+    producer = FakeProducer()
+    consumer = FakeConsumer()
+    metrics = sentiment_sidecar.MetricsRegistry(service_name="sentiment_sidecar")
+    log = FakeLog()
+    msg = NewsMsg(
+        time=datetime(2026, 2, 1, 0, 0, tzinfo=timezone.utc),
+        title="headline",
+        url="http://x",
+        source="rss",
+        sentiment=0.0,
+    )
+
+    async def no_retry(fn, *args, **kwargs):
+        kwargs.pop("log", None)
+        kwargs.pop("op", None)
+        kwargs.pop("max_attempts", None)
+        return await fn(*args, **kwargs)
+
+    monkeypatch.setattr(sentiment_sidecar, "with_retries", no_retry)
+
+    await sentiment_sidecar.persist_and_publish_sentiment_batch(
+        [(FakeMsg(msg.to_bytes()), msg)],
+        [(0.5, "positive", 0.9)],
+        producer,
+        pool,
+        consumer,
+        log,
+        metrics,
+    )
+
+    publish_logs = [extra for key, extra in log.infos if key == "sentiment_enriched_published"]
+    assert publish_logs
+    assert publish_logs[0]["event_id"] == _expected_event_id(msg)
+    assert publish_logs[0]["topic"] == settings.news_enriched_topic
+    assert publish_logs[0]["operation"] == "send_enriched_news"
 
 
 @pytest.mark.asyncio

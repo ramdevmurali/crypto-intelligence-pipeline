@@ -51,6 +51,7 @@ async def check_anomalies(
         ret = metrics.get(f"return_{label}") if metrics else None
         if ret is None:
             continue
+        decision_event_id = f"{ts.isoformat()}:{symbol}:{label}"
         telemetry.inc("anomaly_candidates")
         decision = "emit"
         if abs(ret) < threshold:
@@ -72,9 +73,11 @@ async def check_anomalies(
                 extra={
                     "symbol": symbol,
                     "window": label,
+                    "event_id": decision_event_id,
                     "ret": ret,
                     "threshold": threshold,
                     "decision": decision,
+                    "operation": "detect_anomaly",
                 },
             )
     events = detect_anomalies(
@@ -121,9 +124,25 @@ async def check_anomalies(
                 op="fetch_anomaly_alert_published",
             )
             if published:
-                log.info("anomaly_duplicate_skipped", extra={"event_id": event_id})
+                log.info(
+                    "anomaly_duplicate_skipped",
+                    extra={
+                        "event_id": event_id,
+                        "symbol": event.symbol,
+                        "window": event.window,
+                        "operation": "publish_alert",
+                    },
+                )
                 continue
-            log.info("anomaly_publish_retry", extra={"event_id": event_id})
+            log.info(
+                "anomaly_publish_retry",
+                extra={
+                    "event_id": event_id,
+                    "symbol": event.symbol,
+                    "window": event.window,
+                    "operation": "publish_alert",
+                },
+            )
 
         summary_req = SummaryRequestMsg(
             event_id=event_id,
@@ -157,6 +176,16 @@ async def check_anomalies(
             log=log,
             op="send_summary_request",
         )
+        log.info(
+            "summary_request_published",
+            extra={
+                "event_id": event_id,
+                "symbol": event.symbol,
+                "window": event.window,
+                "topic": settings.summaries_topic,
+                "operation": "send_summary_request",
+            },
+        )
         await with_retries(
             publisher.send_and_wait,
             settings.alerts_topic,
@@ -174,16 +203,29 @@ async def check_anomalies(
                 op="mark_anomaly_alert_published",
             )
         except Exception as exc:
-            log.warning("anomaly_publish_mark_failed", extra={"event_id": event_id, "error": str(exc)})
+            log.warning(
+                "anomaly_publish_mark_failed",
+                extra={
+                    "event_id": event_id,
+                    "symbol": event.symbol,
+                    "window": event.window,
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "operation": "mark_anomaly_alert_published",
+                },
+            )
         processor.record_alert(event.symbol, event.window, event.time)
         log.info(
             "alert_emitted",
             extra={
+                "event_id": event_id,
                 "symbol": event.symbol,
                 "window": event.window,
                 "direction": event.direction,
                 "ret": event.ret,
                 "threshold": event.threshold,
+                "topic": settings.alerts_topic,
+                "operation": "send_alert",
             },
         )
         if processor.alerts_emitted % settings.alert_log_every == 0:

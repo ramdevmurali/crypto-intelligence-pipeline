@@ -23,7 +23,15 @@ async def process_price(proc: ProcessorState, symbol: str, price: float, ts) -> 
     try:
         inserted = await with_retries(insert_price, ts, symbol, price, log=proc.log, op="insert_price")
     except Exception as exc:
-        proc.log.error("price_insert_failed", extra={"error": str(exc), "symbol": symbol})
+        proc.log.error(
+            "price_insert_failed",
+            extra={
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "symbol": symbol,
+                "operation": "insert_price",
+            },
+        )
         get_metrics("processor").inc("price_insert_failed")
         raise PipelineError("insert_price", exc) from exc
 
@@ -36,7 +44,15 @@ async def process_price(proc: ProcessorState, symbol: str, price: float, ts) -> 
             _, metrics = compute_price_metrics(proc, symbol, price, ts)
         except Exception as exc:
             win.restore(snapshot)
-            proc.log.error("metric_compute_failed", extra={"error": str(exc), "symbol": symbol})
+            proc.log.error(
+                "metric_compute_failed",
+                extra={
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "symbol": symbol,
+                    "operation": "compute_metrics",
+                },
+            )
             get_metrics("processor").inc("metric_compute_failed")
             raise PipelineError("compute_metrics", exc) from exc
         try:
@@ -71,12 +87,28 @@ async def persist_and_publish_price(proc: ProcessorState, symbol: str, ts, metri
         try:
             await with_retries(insert_metric, ts, symbol, metrics, log=proc.log, op="insert_metric")
         except Exception as exc:
-            proc.log.error("metric_insert_failed", extra={"error": str(exc), "symbol": symbol})
+            proc.log.error(
+                "metric_insert_failed",
+                extra={
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "symbol": symbol,
+                    "operation": "insert_metric",
+                },
+            )
             get_metrics("processor").inc("metric_insert_failed")
             raise PipelineError("insert_metric", exc) from exc
     try:
         await check_anomalies(proc, symbol, ts, metrics or {}, publisher=proc.producer)
     except Exception as exc:
-        proc.log.error("anomaly_check_failed", extra={"error": str(exc), "symbol": symbol})
+        proc.log.error(
+            "anomaly_check_failed",
+            extra={
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "symbol": symbol,
+                "operation": "check_anomalies",
+            },
+        )
         get_metrics("processor").inc("anomaly_check_failed")
         raise PipelineError("check_anomalies", exc) from exc

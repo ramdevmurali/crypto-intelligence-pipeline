@@ -50,7 +50,16 @@ async def _send_dlq(producer, payload: bytes, log, metrics: MetricsRegistry, off
         return True
     except Exception as exc:
         metrics.inc("sentiment_dlq_failed")
-        log.error("news_dlq_failed", extra={"error": str(exc), "offset": offset})
+        log.error(
+            "news_dlq_failed",
+            extra={
+                "topic": settings.news_dlq_topic,
+                "offset": offset,
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "operation": "send_news_dlq",
+            },
+        )
         return False
 
 
@@ -95,7 +104,17 @@ async def infer_sentiment_batch(messages: Iterable, consumer, producer, log, met
         try:
             payload = NewsMsg.model_validate_json(msg.value)
         except Exception as exc:
-            log.warning("news_message_decode_failed", extra={"error": str(exc)})
+            log.warning(
+                "news_message_decode_failed",
+                extra={
+                    "topic": msg.topic,
+                    "partition": msg.partition,
+                    "offset": msg.offset,
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "operation": "decode_news",
+                },
+            )
             _record_sentiment_failure(metrics)
             metrics.inc("sentiment_dlq")
             dlq_ok = await _send_dlq(producer, msg.value, log, metrics, offset=msg.offset)
@@ -163,8 +182,10 @@ async def infer_sentiment_batch(messages: Iterable, consumer, producer, log, met
         extra={
             "batch_size": len(parsed),
             "sentiment_infer_ms": infer_ms,
+            "duration_ms": infer_ms,
             "queue_lag_ms": queue_lag_ms,
             "fallback_used": fallback_used,
+            "operation": "infer_sentiment_batch",
         },
     )
     return parsed, results, fallback_used, infer_ms, queue_lag_ms
@@ -201,9 +222,30 @@ async def persist_and_publish_sentiment_batch(parsed, results, producer, pool, c
                 log=log,
                 op="send_enriched_news",
             )
+            log.info(
+                "sentiment_enriched_published",
+                extra={
+                    "event_id": event_id,
+                    "topic": settings.news_enriched_topic,
+                    "source": payload.source,
+                    "operation": "send_enriched_news",
+                },
+            )
             await _commit_message(consumer, msg, log)
         except Exception as exc:
-            log.warning("sentiment_handle_failed", extra={"error": str(exc)})
+            event_id = _news_event_id(payload)
+            log.warning(
+                "sentiment_handle_failed",
+                extra={
+                    "event_id": event_id,
+                    "topic": msg.topic,
+                    "partition": msg.partition,
+                    "offset": msg.offset,
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "operation": "persist_and_publish_sentiment",
+                },
+            )
             _record_sentiment_failure(metrics)
             metrics.inc("sentiment_dlq")
             dlq_ok = await _send_dlq(producer, msg.value, log, metrics, offset=msg.offset)
@@ -232,6 +274,8 @@ class SentimentSidecar(SidecarRuntime, RuntimeService):
             extra={
                 "brokers": settings.kafka_brokers,
                 "topic": settings.news_topic,
+                "consumer_group": settings.sentiment_sidecar_group,
+                "operation": "start_sentiment_sidecar",
                 "sentiment_provider": settings.sentiment_provider,
                 "sentiment_model_path": settings.sentiment_model_path,
                 "tokenizer_type": "tokenizers" if settings.sentiment_light_runtime else "transformers",

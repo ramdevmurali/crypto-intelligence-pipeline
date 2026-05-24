@@ -97,7 +97,12 @@ class SummarySidecar(SidecarRuntime, RuntimeService):
     async def start(self) -> None:
         self.log.info(
             "summary_sidecar_start",
-            extra={"brokers": settings.kafka_brokers, "topic": settings.summaries_topic},
+            extra={
+                "brokers": settings.kafka_brokers,
+                "topic": settings.summaries_topic,
+                "consumer_group": settings.summary_consumer_group,
+                "operation": "start_summary_sidecar",
+            },
         )
 
         self._producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_brokers)
@@ -207,7 +212,9 @@ async def hydrate_payload_with_latest_headline(payload: dict, pool, log) -> dict
 
 
 async def persist_summary(payload, summary: str, pool, log, ts):
-    log.info("summary_request_received", extra=payload)
+    request_fields = dict(payload)
+    request_fields["operation"] = "persist_summary"
+    log.info("summary_request_received", extra=request_fields)
 
     # Upsert anomalies table with enriched summary
     await pool.execute(
@@ -246,7 +253,16 @@ async def publish_summary_alert(payload, summary: str, producer, log, event_id: 
         summary=summary,
     )
     await producer.send_and_wait(settings.alerts_topic, enriched_alert.to_bytes())
-    log.info("summary_enriched", extra={"symbol": payload["symbol"], "window": payload["window"]})
+    log.info(
+        "summary_enriched",
+        extra={
+            "event_id": event_id,
+            "symbol": payload["symbol"],
+            "window": payload["window"],
+            "topic": settings.alerts_topic,
+            "operation": "publish_summary_alert",
+        },
+    )
 
 
 async def _commit_message(consumer, msg, log):
@@ -270,6 +286,7 @@ async def process_summary_record(msg, consumer, producer, pool, log, semaphore: 
     metrics = get_metrics("summary")
     metrics.inc("summary_processed")
     started = time.perf_counter()
+    payload = None
     try:
         payload = SummaryRequestMsg.model_validate_json(msg.value).model_dump()
         payload = await hydrate_payload_with_latest_headline(payload, pool, log)
@@ -285,7 +302,14 @@ async def process_summary_record(msg, consumer, producer, pool, log, semaphore: 
         except Exception as exc:
             log.exception(
                 "summary_llm_error",
-                extra={"error": str(exc), "symbol": payload.get("symbol"), "window": payload.get("window")},
+                extra={
+                    "event_id": payload.get("event_id"),
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "symbol": payload.get("symbol"),
+                    "window": payload.get("window"),
+                    "operation": "compute_summary",
+                },
             )
             raise
 
@@ -310,7 +334,16 @@ async def process_summary_record(msg, consumer, producer, pool, log, semaphore: 
         )
         if published:
             metrics.inc("summary_publish_skipped")
-            log.info("summary_alert_already_published", extra={"event_id": event_id})
+            log.info(
+                "summary_alert_already_published",
+                extra={
+                    "event_id": event_id,
+                    "symbol": payload["symbol"],
+                    "window": payload["window"],
+                    "topic": settings.alerts_topic,
+                    "operation": "publish_summary_alert",
+                },
+            )
             await _commit_message(consumer, msg, log)
             metrics.inc("summary_success")
             return True
@@ -334,12 +367,35 @@ async def process_summary_record(msg, consumer, producer, pool, log, semaphore: 
                 op="mark_anomaly_alert_published",
             )
         except Exception as exc:
-            log.warning("summary_alert_mark_failed", extra={"event_id": event_id, "error": str(exc)})
+            log.warning(
+                "summary_alert_mark_failed",
+                extra={
+                    "event_id": event_id,
+                    "symbol": payload["symbol"],
+                    "window": payload["window"],
+                    "error": str(exc),
+                    "error_type": type(exc).__name__,
+                    "operation": "mark_anomaly_alert_published",
+                },
+            )
         await _commit_message(consumer, msg, log)
         metrics.inc("summary_success")
         return True
     except Exception as exc:
-        log.warning("summary_handle_failed", extra={"error": str(exc)})
+        log.warning(
+            "summary_handle_failed",
+            extra={
+                "event_id": payload.get("event_id") if payload else None,
+                "symbol": payload.get("symbol") if payload else None,
+                "window": payload.get("window") if payload else None,
+                "topic": msg.topic,
+                "partition": msg.partition,
+                "offset": msg.offset,
+                "error": str(exc),
+                "error_type": type(exc).__name__,
+                "operation": "process_summary_record",
+            },
+        )
         metrics.inc("summary_failures")
         metrics.inc("summary_dlq")
         try:
@@ -352,7 +408,20 @@ async def process_summary_record(msg, consumer, producer, pool, log, semaphore: 
             )
         except Exception as dlq_exc:
             metrics.inc("summary_dlq_failed")
-            log.error("summary_dlq_failed", extra={"error": str(dlq_exc), "offset": msg.offset})
+            log.error(
+                "summary_dlq_failed",
+                extra={
+                    "event_id": payload.get("event_id") if payload else None,
+                    "symbol": payload.get("symbol") if payload else None,
+                    "window": payload.get("window") if payload else None,
+                    "topic": settings.summaries_dlq_topic,
+                    "partition": msg.partition,
+                    "offset": msg.offset,
+                    "error": str(dlq_exc),
+                    "error_type": type(dlq_exc).__name__,
+                    "operation": "send_summary_dlq",
+                },
+            )
             _append_summary_dlq_buffer(msg.value, log)
         await _commit_message(consumer, msg, log)
         return False

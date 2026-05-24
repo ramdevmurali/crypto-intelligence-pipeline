@@ -35,9 +35,26 @@ async def with_retries(fn, *args, max_attempts: int | None = None, log=None, op:
             metrics.inc("retry.total")
             metrics.inc(f"retry.{op_name}")
             if log:
-                log.warning("op_failed", extra={"op": op_name, "attempt": attempt, "error": str(exc)})
+                log.warning(
+                    "op_failed",
+                    extra={
+                        "op": op_name,
+                        "operation": op_name,
+                        "attempt": attempt,
+                        "error": str(exc),
+                        "error_type": type(exc).__name__,
+                    },
+                )
             if attempt >= max_attempts:
                 if log:
-                    log.error("op_dropped", extra={"op": op_name, "error": str(exc)})
+                    log.error(
+                        "op_dropped",
+                        extra={
+                            "op": op_name,
+                            "operation": op_name,
+                            "error": str(exc),
+                            "error_type": type(exc).__name__,
+                        },
+                    )
                 raise
             await sleep_backoff(attempt)
