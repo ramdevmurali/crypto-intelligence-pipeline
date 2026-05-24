@@ -10,6 +10,7 @@ from ..processor_state import ProcessorState
 from ..metrics import get_metrics
 from ..config import settings, get_windows, get_thresholds
 from ..logging_config import get_logger
+from ..utils import now_utc
 
 
 @dataclass
@@ -27,6 +28,8 @@ async def process_price(proc: ProcessorState, symbol: str, price: float, ts) -> 
         raise PipelineError("insert_price", exc) from exc
 
     if inserted:
+        age_sec = max(0.0, (now_utc() - ts).total_seconds())
+        get_metrics("processor").observe("latest_price_age_sec", age_sec)
         win = proc.price_windows[symbol]
         snapshot = win.snapshot()
         try:

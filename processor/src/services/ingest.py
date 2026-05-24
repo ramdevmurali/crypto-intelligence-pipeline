@@ -115,6 +115,7 @@ async def price_ingest_task(processor: ProcessorState):
     failures = 0
     price_messages_sent = 0
     metrics = get_metrics()
+    telemetry = get_metrics("processor")
     while True:
         try:
             async with websockets.connect(url) as ws:
@@ -139,6 +140,7 @@ async def price_ingest_task(processor: ProcessorState):
                     await with_retries(processor.producer.send_and_wait, settings.price_topic, msg.to_bytes(), log=log, op="send_price")
                     log.info("price_published", extra={"symbol": symbol, "price": price})
                     price_messages_sent += 1
+                    telemetry.inc("prices_ingested")
                     if price_messages_sent % settings.price_publish_log_every == 0:
                         log.info("price_published_count", extra={"count": price_messages_sent})
         except asyncio.CancelledError:
@@ -241,6 +243,7 @@ async def news_ingest_task(processor: ProcessorState):
                     pending.discard(uid)
                     news_messages_sent += 1
                     telemetry.inc("news_entries_ingested")
+                    telemetry.inc("news_ingested")
                     if news_messages_sent % settings.news_publish_log_every == 0:
                         log.info("news_published_count", extra={"count": news_messages_sent})
             latest_ts = None

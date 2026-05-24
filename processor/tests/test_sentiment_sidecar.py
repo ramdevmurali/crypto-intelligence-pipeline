@@ -180,7 +180,7 @@ async def test_sentiment_sidecar_enriches_and_publishes(monkeypatch):
         source="rss",
         sentiment=0.0,
     )
-    await _run_sentiment_flow([FakeMsg(msg.to_bytes())], consumer, producer, pool)
+    _fallback_used, metrics = await _run_sentiment_flow([FakeMsg(msg.to_bytes())], consumer, producer, pool)
 
     assert len(pool.calls) == 1
     sql, params = pool.calls[0]
@@ -197,6 +197,7 @@ async def test_sentiment_sidecar_enriches_and_publishes(monkeypatch):
     assert out["event_id"] == _expected_event_id(msg)
     assert out["event_id"].startswith("news:rss:")
     assert len(consumer.commits) == 1
+    assert metrics.snapshot()["counters"].get("sentiment_processed") == 1
 
 
 @pytest.mark.asyncio
@@ -222,6 +223,7 @@ async def test_sentiment_sidecar_falls_back_on_model_error(monkeypatch):
     assert fallback_used is True
     snapshot = metrics.snapshot()
     assert snapshot["counters"].get("sentiment_fallbacks") == 1
+    assert snapshot["counters"].get("sentiment_failed") == 1
 
     assert len(producer.sent) == 1
     _, payload = producer.sent[0]
@@ -324,6 +326,7 @@ async def test_sentiment_result_mismatch_falls_back(monkeypatch):
     assert fallback_used is True
     snapshot = metrics.snapshot()
     assert snapshot["counters"].get("sentiment_errors") == 1
+    assert snapshot["counters"].get("sentiment_failed") == 1
 
 
 @pytest.mark.asyncio

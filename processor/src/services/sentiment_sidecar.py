@@ -84,6 +84,11 @@ def _news_event_id(payload: NewsMsg) -> str:
     return f"news:{source_norm}:{digest}"
 
 
+def _record_sentiment_failure(metrics: MetricsRegistry) -> None:
+    metrics.inc("sentiment_errors")
+    metrics.inc("sentiment_failed")
+
+
 async def infer_sentiment_batch(messages: Iterable, consumer, producer, log, metrics: MetricsRegistry):
     parsed: List[Tuple[object, NewsMsg]] = []
     for msg in messages:
@@ -91,7 +96,7 @@ async def infer_sentiment_batch(messages: Iterable, consumer, producer, log, met
             payload = NewsMsg.model_validate_json(msg.value)
         except Exception as exc:
             log.warning("news_message_decode_failed", extra={"error": str(exc)})
-            metrics.inc("sentiment_errors")
+            _record_sentiment_failure(metrics)
             metrics.inc("sentiment_dlq")
             dlq_ok = await _send_dlq(producer, msg.value, log, metrics, offset=msg.offset)
             if dlq_ok:
@@ -117,11 +122,11 @@ async def infer_sentiment_batch(messages: Iterable, consumer, producer, log, met
         if model_fallback:
             fallback_used = True
             if settings.sentiment_provider != "stub":
-                metrics.inc("sentiment_errors")
+                _record_sentiment_failure(metrics)
     except Exception:
         results = _fallback_results(titles)
         fallback_used = True
-        metrics.inc("sentiment_errors")
+        _record_sentiment_failure(metrics)
     infer_ms = (time.perf_counter() - infer_start) * 1000
     metrics.observe("sentiment_infer_ms", infer_ms)
     metrics.observe("queue_lag_ms", queue_lag_ms)
@@ -142,7 +147,7 @@ async def infer_sentiment_batch(messages: Iterable, consumer, producer, log, met
         )
         results = _fallback_results(titles)
         fallback_used = True
-        metrics.inc("sentiment_errors")
+        _record_sentiment_failure(metrics)
 
     if fallback_used:
         metrics.inc("sentiment_fallbacks")
@@ -199,11 +204,13 @@ async def persist_and_publish_sentiment_batch(parsed, results, producer, pool, c
             await _commit_message(consumer, msg, log)
         except Exception as exc:
             log.warning("sentiment_handle_failed", extra={"error": str(exc)})
-            metrics.inc("sentiment_errors")
+            _record_sentiment_failure(metrics)
             metrics.inc("sentiment_dlq")
             dlq_ok = await _send_dlq(producer, msg.value, log, metrics, offset=msg.offset)
             if dlq_ok:
                 await _commit_message(consumer, msg, log)
+        else:
+            metrics.inc("sentiment_processed")
 
 
 class SentimentSidecar(SidecarRuntime, RuntimeService):

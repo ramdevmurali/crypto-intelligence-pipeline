@@ -545,6 +545,7 @@ async def test_summary_metrics_increment_on_success(monkeypatch):
     ok, _, _, _ = await _run_summary_record(payload, monkeypatch)
     assert ok is True
     snapshot = metrics.snapshot()
+    assert snapshot["counters"].get("summary.summary_processed") == 1
     assert snapshot["counters"].get("summary.summary_success") == 1
     assert snapshot["rolling"]["summary.summary_latency_ms"]["count"] == 1
 
@@ -569,6 +570,7 @@ async def test_summary_metrics_increment_on_failure(monkeypatch):
     ok, _, _, _ = await _run_summary_record(payload, monkeypatch, fail_publish=True)
     assert ok is False
     snapshot = metrics.snapshot()
+    assert snapshot["counters"].get("summary.summary_processed") == 1
     assert snapshot["counters"].get("summary.summary_failures") == 1
     assert snapshot["counters"].get("summary.summary_dlq") == 1
 

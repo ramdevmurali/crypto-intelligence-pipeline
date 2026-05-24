@@ -268,6 +268,7 @@ async def _commit_message(consumer, msg, log):
 
 async def process_summary_record(msg, consumer, producer, pool, log, semaphore: asyncio.Semaphore):
     metrics = get_metrics("summary")
+    metrics.inc("summary_processed")
     started = time.perf_counter()
     try:
         payload = SummaryRequestMsg.model_validate_json(msg.value).model_dump()

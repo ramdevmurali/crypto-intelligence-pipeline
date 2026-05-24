@@ -519,6 +519,7 @@ async def test_news_ingest_cross_feed_duplicate_published_once(monkeypatch):
     assert published[0].source == "feed-a"
     counters = metrics_module.get_metrics().snapshot()["counters"]
     assert counters.get("processor.news_entries_ingested") == 1
+    assert counters.get("processor.news_ingested") == 1
 
 
 @pytest.mark.asyncio

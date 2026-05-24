@@ -4,6 +4,7 @@ from datetime import datetime
 
 from processor.src import app as app_module
 from processor.src import config as config_module
+from processor.src import metrics as metrics_module
 from processor.src.services import price_pipeline as pipeline_module
 from processor.src.services import price_consumer as consumer_module
 
@@ -183,6 +184,7 @@ async def test_process_prices_task_drops_late_message(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_process_prices_task_skips_commit_on_dlq_failure(monkeypatch):
+    metrics_module._GLOBAL_METRICS = metrics_module.MetricsRegistry(service_name="processor")
     proc = app_module.StreamProcessor()
     msg = FakeMsg(b"not-json")
     proc.consumer = FakeConsumer(msg)
@@ -197,6 +199,11 @@ async def test_process_prices_task_skips_commit_on_dlq_failure(monkeypatch):
     monkeypatch.setattr(proc, "commit_msg", fail_commit)
 
     await proc.process_prices_task()
+    counters = metrics_module.get_metrics().snapshot()["counters"]
+    assert counters.get("processor.price_dlq") == 1
+    assert counters.get("processor.price_dlq_sent") == 1
+    assert counters.get("processor.price_dlq_failed") == 1
+    assert counters.get("processor.price_dlq_send_failed") == 1
 
 
 @pytest.mark.asyncio

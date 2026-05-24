@@ -5,6 +5,7 @@ import pytest
 
 from processor.src.domain.windows import PriceWindow
 from processor.src import config as config_module
+from processor.src import metrics as metrics_module
 from processor.src.services import price_pipeline
 
 
@@ -94,6 +95,32 @@ async def test_process_price_rolls_back_on_metric_failure(monkeypatch):
 
     assert win.buffer == snapshot
     assert win.z_ewma == {}
+
+
+@pytest.mark.asyncio
+async def test_process_price_records_latest_price_age(monkeypatch):
+    metrics_module._GLOBAL_METRICS = metrics_module.MetricsRegistry(service_name="processor")
+    proc = FakeProc()
+    ts = datetime(2026, 1, 1, 0, 0, tzinfo=timezone.utc)
+
+    async def fake_insert_price(*args, **kwargs):
+        return True
+
+    async def fake_insert_metric(*args, **kwargs):
+        return None
+
+    async def fake_check_anomalies(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(price_pipeline, "insert_price", fake_insert_price)
+    monkeypatch.setattr(price_pipeline, "insert_metric", fake_insert_metric)
+    monkeypatch.setattr(price_pipeline, "check_anomalies", fake_check_anomalies)
+    monkeypatch.setattr(price_pipeline, "now_utc", lambda: ts + timedelta(seconds=2))
+
+    await price_pipeline.process_price(proc, "btcusdt", 100.0, ts)
+
+    rolling = metrics_module.get_metrics().snapshot()["rolling"]
+    assert rolling["processor.latest_price_age_sec"]["last"] == 2.0
 
 
 @pytest.mark.asyncio
