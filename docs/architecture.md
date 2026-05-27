@@ -18,6 +18,7 @@ It is based only on code/config references listed below (no inferred or future-s
 - `processor/src/io/models/messages.py`
 - `processor/src/config.py`
 - `backend/app/main.py`
+- `backend/app/diagnostics.py`
 - `backend/app/db.py`
 - `backend/app/streams.py`
 - `frontend/src/features/dashboard/use-dashboard-data.ts`
@@ -209,9 +210,12 @@ The anomaly and summary paths share the `anomalies.alert_published` flag to avoi
 The frontend reads backend REST/SSE endpoints through feature hooks. `useDashboardData` adapts those hook results into stable dashboard props, and the dashboard panels/charts render from those props. Processor-derived logic stays in the backend/processor path, not in the UI.
 
 ## Observability
-- `processor` can expose runtime metrics through the processor metrics HTTP server.
-- `summary-sidecar` can expose summary-sidecar metrics when `SUMMARY_METRICS_PORT` is configured.
-- `sentiment-sidecar` can expose sentiment-sidecar metrics when `SENTIMENT_METRICS_PORT` is configured.
+- Backend `GET /diagnostics/pipeline` reports DB-backed freshness, recent row counts, and `ok` / `degraded` / `stale` / `down` status without inspecting Kafka directly.
+- `processor` can expose JSON runtime metrics through the processor metrics HTTP server.
+- `summary-sidecar` can expose JSON summary-sidecar metrics when `SUMMARY_METRICS_PORT` is configured.
+- `sentiment-sidecar` can expose JSON sentiment-sidecar metrics when `SENTIMENT_METRICS_PORT` is configured.
+- Processor and sidecar Docker logs render structured `fields={...}` metadata for traceability, including `event_id`, `symbol`, `window`, `topic`, `operation`, offsets, and error metadata.
+- Prometheus, Grafana, OpenTelemetry, and a frontend observability dashboard are not part of the current runtime.
 
 ## Edge-to-Source Index
 | Edge | Producer/Writer | Consumer/Reader | Source refs |
@@ -243,6 +247,7 @@ The frontend reads backend REST/SSE endpoints through feature hooks. `useDashboa
 | Backend reads `metrics` | `fetch_latest_metrics` | `/metrics/latest` | `backend/app/db.py`, `backend/app/main.py` |
 | Backend reads `headlines` | `fetch_headlines` | `/headlines` + `/headlines/stream` | `backend/app/db.py`, `backend/app/main.py`, `backend/app/streams.py` |
 | Backend reads `anomalies` | `fetch_alerts` | `/alerts` + `/alerts/stream` | `backend/app/db.py`, `backend/app/main.py`, `backend/app/streams.py` |
+| Backend diagnostics | diagnostics DB helpers | `/diagnostics/pipeline` | `backend/app/db.py`, `backend/app/diagnostics.py`, `backend/app/main.py` |
 | Frontend data orchestration | feature hooks | dashboard panels/charts | `frontend/src/features/dashboard/use-dashboard-data.ts`, `frontend/src/features/dashboard/` |
 | Runtime metrics HTTP | metrics handlers | optional HTTP listeners | `processor/src/metrics_http.py`, `processor/src/streaming_core.py`, `processor/src/services/summary_sidecar.py`, `processor/src/services/sentiment_sidecar.py` |
 | Runtime verify gate | `make verify-runtime` + script | checks running summary-sidecar source signature | `Makefile`, `scripts/verify_runtime_build.py` |

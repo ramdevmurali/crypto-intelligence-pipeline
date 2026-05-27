@@ -7,7 +7,7 @@
 
 ## Endpoints
 - `GET /health` — pings DB (`SELECT 1`); 200 on OK, 503 on failure.
-- `GET /diagnostics/pipeline` — read-only DB diagnostics for pipeline freshness and recent row counts; does not inspect Kafka.
+- `GET /diagnostics/pipeline` — read-only DB diagnostics for pipeline freshness, recent row counts, and `ok` / `degraded` / `stale` / `down` status; does not inspect Kafka.
 - `GET /prices?symbol=&limit=` — latest ticks (desc). Params: `symbol` (required, case-insensitive), `limit` (default 200).
 - `GET /metrics/latest?symbol=` — most recent rollup for a symbol; 404 if none.
 - `GET /headlines?limit=&since=` — recent headlines with sentiment. Params: `limit` (default 20), `since` (optional ISO 8601).
@@ -31,7 +31,18 @@
   - `fetch_latest_metrics(symbol)`
   - `fetch_headlines(limit)`
   - `fetch_alerts(limit)`
+  - diagnostics helpers for latest price/metric/headline/alert timestamps and recent counts
 - No schema creation here (processor handles DDL).
+
+## Diagnostics
+- `/health` is intentionally cheap and suitable for container/load-balancer health checks.
+- `/diagnostics/pipeline` runs TimescaleDB reads only; it does not inspect Kafka offsets or broker state.
+- Core freshness checks:
+  - prices: `ok` up to 15s, `degraded` up to 60s, `stale` after 60s
+  - metrics: `ok` up to 20s, `degraded` up to 90s, `stale` after 90s
+  - headlines: `ok` up to 30m, `degraded` up to 2h, `stale` after 2h
+  - alerts: informational; no recent alert does not make the pipeline unhealthy
+- Counts are reported for prices, metrics, headlines, and alerts over `15m` and `1h` windows.
 
 ## How to run
 ```

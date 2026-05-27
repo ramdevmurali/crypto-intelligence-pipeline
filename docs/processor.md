@@ -8,7 +8,8 @@
 - Backoff + jitter on reconnects; retries with backoff for DB/Kafka.
 - Circuit-breaker counters to lengthen backoff after repeated failures.
 - Graceful cancellation of tasks; startup healthcheck for DB/Kafka.
-- Structured logging and lightweight counters (price/news publishes, alerts).
+- Structured Docker logs with rendered `fields={...}` metadata for traceable events.
+- Lightweight JSON runtime metrics for ingest, freshness, anomaly, sidecar, DLQ, and latency paths.
 - Deduped price inserts via `ON CONFLICT (time, symbol) DO NOTHING`.
 - Bad price guards: JSON decode errors are counted, warning is rate-limited (first + every 50th), and the raw payload is sent to a price DLQ topic; processing continues.
 
@@ -89,6 +90,8 @@ with the baseline heuristic sentiment; consumers can continue using `news` until
 
 ## Anomaly observability
 Processor telemetry includes explicit anomaly-path decisions (namespaced under `processor.`):
+- `processor.prices_ingested`
+- `processor.news_ingested`
 - `processor.anomaly_candidates`
 - `processor.anomaly_emitted`
 - `processor.anomaly_suppressed_threshold`
@@ -97,12 +100,29 @@ Processor telemetry includes explicit anomaly-path decisions (namespaced under `
 - `processor.news_entries_ingested`
 - `processor.news_feed_errors`
 - `processor.news_stale_polls`
+- `processor.price_dlq`
+- `processor.price_dlq_failed`
+- rolling `processor.latest_price_age_sec`
 - rolling `processor.latest_headline_age_sec`
 
-Decision logs are sampled (`anomaly_decision_sample`) to avoid per-tick spam and still explain emit/suppress reasons.
+Decision logs are sampled (`anomaly_decision_sample`) to avoid per-tick spam and still explain emit/suppress reasons. Structured fields include `event_id`, `symbol`, `window`, `operation`, and related context.
+
+Runtime metrics endpoints:
+- Processor: JSON `/metrics` when `PROCESSOR_METRICS_PORT` is configured (default `9102` in compose).
+- Summary sidecar: JSON `/metrics` when `SUMMARY_METRICS_PORT` is configured.
+- Sentiment sidecar: JSON `/metrics` when `SENTIMENT_METRICS_PORT` is configured (default `9101` in compose).
+
+Sidecar runtime metrics:
+- Summary metrics use the `summary.` namespace, including `summary.summary_processed`, `summary.summary_success`, `summary.summary_failures`, `summary.summary_dlq`, `summary.summary_dlq_failed`, `summary.summary_publish_skipped`, and rolling `summary.summary_latency_ms`.
+- Sentiment metrics use the sentiment sidecar registry, including `sentiment_batches`, `sentiment_processed`, `sentiment_failed`, `sentiment_errors`, `sentiment_fallbacks`, `sentiment_dlq`, `sentiment_dlq_failed`, rolling `sentiment_infer_ms`, and rolling `queue_lag_ms`.
+
+Structured log fields used across processor and sidecars:
+- `event_id`, `symbol`, `window`, `topic`, `consumer_group`, `operation`
+- `duration_ms`, `error`, `error_type`, `offset`, `partition`
 
 Non-goals for now:
 - No schema registry (JSON/Avro) yet; models + tests enforce contracts.
+- No Prometheus/Grafana or OpenTelemetry stack yet; JSON metrics and structured Docker logs are the current observability surface.
 
 ## Interfaces (module inputs/outputs)
 - `services/ingest.py`: inputs — Binance WS ticks + RSS feed; outputs — Kafka `prices`/`news`, Timescale `prices`/`headlines`, updates `processor.latest_headline`.

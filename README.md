@@ -59,6 +59,14 @@ This keeps detection deterministic, low-latency, explainable, and easy to inspec
 
 The goal is an explainable anomaly signal inside a resilient real-time pipeline, not a claim of predictive trading accuracy. Thresholds are operational defaults and can be tuned with historical backtesting.
 
+## Observability
+- `GET /health` stays cheap and only verifies backend DB reachability.
+- `GET /diagnostics/pipeline` reports DB-backed pipeline freshness, recent row counts, and `ok` / `degraded` / `stale` / `down` status without inspecting Kafka directly.
+- Processor and sidecars expose lightweight JSON runtime metrics for ingestion, freshness, anomaly decisions, summary jobs, sentiment jobs, DLQ paths, and latency observations.
+- Docker logs include structured fields such as `event_id`, `symbol`, `window`, `topic`, `operation`, offsets, and error metadata for tracing alert, summary, and sentiment paths.
+
+See [`docs/observability.md`](docs/observability.md) for the implemented observability model and current non-goals.
+
 ## Running locally
 Prereqs: Docker, Docker Compose, Python 3.11+, Node 20+.
 

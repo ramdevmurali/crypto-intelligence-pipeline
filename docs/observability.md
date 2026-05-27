@@ -1,37 +1,40 @@
-# Observability Implementation Plan
+# Observability
 
 ## Purpose
 Add practical observability to the Real-Time Crypto Intelligence Pipeline without changing the core data flow. The goal is to make pipeline freshness, alert behavior, sidecar health, and failure modes easy to inspect during local runs and demos.
 
-This plan excludes Prometheus, Grafana, OpenTelemetry, and frontend observability dashboards for now. The first pass should use lightweight JSON diagnostics, existing runtime counters, structured logs, and targeted tests.
+This document describes the current lightweight observability surface. It excludes Prometheus, Grafana, OpenTelemetry, and frontend observability dashboards for now. The implemented surface is JSON diagnostics, JSON runtime metrics, structured Docker logs, and targeted tests.
 
 ## Current State
 - The backend exposes a lightweight `GET /health` endpoint that checks DB reachability.
+- The backend exposes `GET /diagnostics/pipeline` for read-only DB-backed pipeline freshness and recent row counts.
 - The processor can expose a JSON `/metrics` endpoint through `processor/src/metrics_http.py`.
 - The summary sidecar can expose JSON `/metrics` when `SUMMARY_METRICS_PORT` is configured.
 - The sentiment sidecar can expose JSON `/metrics` when `SENTIMENT_METRICS_PORT` is configured.
 - Runtime metrics are stored in `MetricsRegistry` as counters and rolling observations.
-- The processor already tracks anomaly decision counters such as emitted, suppressed by threshold, and suppressed by cooldown.
-- Alerts and summary requests already carry deterministic `event_id` values in Kafka payloads.
+- The processor tracks ingest, freshness, DLQ, anomaly decision, emitted, threshold-suppression, and cooldown-suppression counters.
+- Summary and sentiment sidecars track processed/success/failure/DLQ/latency paths.
+- Docker logs render structured `fields={...}` metadata for important processor and sidecar events.
+- Alerts, summary requests, and enriched news carry deterministic `event_id` values in Kafka payloads.
 
 ## Non-Goals
-- No Prometheus/Grafana compose profile in this phase.
+- No Prometheus/Grafana compose profile in the current implementation.
 - No OpenTelemetry or distributed tracing stack.
 - No new observability libraries.
 - No frontend observability dashboard yet.
-- No direct Kafka broker inspection from the backend diagnostics endpoint in the first version.
+- No direct Kafka broker inspection from the backend diagnostics endpoint.
 - No tests that assert exact log message prose.
 
 ## Backend Diagnostics Endpoint
-Add a read-only endpoint:
+Implemented endpoint:
 
 ```text
 GET /diagnostics/pipeline
 ```
 
-The endpoint should query TimescaleDB only. It should not consume Kafka, inspect broker offsets, or mutate state.
+The endpoint queries TimescaleDB only. It does not consume Kafka, inspect broker offsets, or mutate state.
 
-Recommended payload:
+Payload shape:
 
 ```json
 {
@@ -60,11 +63,11 @@ Recommended payload:
 
 Status levels:
 - `ok`: data is fresh enough for the service type.
-- `degraded`: one or more streams are stale, but the backend and DB are reachable.
-- `stale`: core data has not updated within the expected freshness window.
+- `degraded`: one or more core streams are older than the `ok` target but still inside the stale threshold.
+- `stale`: one or more core streams have not updated within the expected freshness window.
 - `down`: DB query failed or the endpoint cannot produce diagnostics.
 
-First-version DB helpers:
+DB-backed diagnostics:
 - latest price time by symbol from `prices`
 - latest metric time by symbol from `metrics`
 - latest headline time from `headlines`
@@ -79,13 +82,13 @@ Current behavior should remain valid:
 - `200` on healthy DB
 - `503` on DB failure
 
-Optional refinement:
+Current boundary:
 - Keep `/health` as the uptime/load-balancer check.
 - Put expensive freshness/count queries only in `/diagnostics/pipeline`.
 - If `/health` is extended, include only a compact status summary and avoid table scans.
 
 ## Runtime Metrics
-The existing JSON `/metrics` endpoints should be standardized before adding a monitoring stack.
+The existing `/metrics` endpoints return JSON snapshots from `MetricsRegistry`. They are intentionally not Prometheus-format yet.
 
 Target services:
 - processor
@@ -99,7 +102,7 @@ Current implementation:
 - sentiment sidecar owns a local `MetricsRegistry(service_name="sentiment_sidecar")`.
 - summary sidecar uses the global registry namespace `summary`.
 
-Recommended metric names:
+Implemented high-value metric names:
 - `processor.prices_ingested`
 - `processor.news_ingested`
 - `processor.price_dlq`
@@ -111,6 +114,8 @@ Recommended metric names:
 - `processor.anomaly_emitted_without_headline`
 - `processor.latest_price_age_sec`
 - `processor.latest_headline_age_sec`
+- compatibility counters such as `processor.news_entries_ingested`, `processor.price_dlq_sent`, and `processor.price_dlq_send_failed`
+- `summary.summary_processed`
 - `summary.summary_batches`
 - `summary.summary_success`
 - `summary.summary_failures`
@@ -118,13 +123,15 @@ Recommended metric names:
 - `summary.summary_dlq_failed`
 - `summary.summary_publish_skipped`
 - `summary.summary_latency_ms`
-- `sentiment_sidecar.sentiment_batches`
-- `sentiment_sidecar.sentiment_errors`
-- `sentiment_sidecar.sentiment_fallbacks`
-- `sentiment_sidecar.sentiment_dlq`
-- `sentiment_sidecar.sentiment_dlq_failed`
-- `sentiment_sidecar.sentiment_infer_ms`
-- `sentiment_sidecar.queue_lag_ms`
+- `sentiment_batches`
+- `sentiment_processed`
+- `sentiment_failed`
+- `sentiment_errors`
+- `sentiment_fallbacks`
+- `sentiment_dlq`
+- `sentiment_dlq_failed`
+- `sentiment_infer_ms`
+- `queue_lag_ms`
 
 Implementation notes:
 - Preserve existing metric names where they are already used by tests.
@@ -133,9 +140,9 @@ Implementation notes:
 - Avoid high-cardinality labels in the current registry design.
 
 ## Structured Logging
-Standardize important log fields so pipeline events can be traced in plain Docker logs.
+Processor and sidecar logs render structured `extra` fields as `fields={...}` metadata in plain Docker logs. This keeps local logs easy to read while making important events traceable by operation, topic, symbol, and event ID.
 
-Recommended common fields:
+Common fields:
 - `event_id`
 - `symbol`
 - `window`
@@ -144,8 +151,11 @@ Recommended common fields:
 - `operation`
 - `duration_ms`
 - `error`
+- `error_type`
+- `offset`
+- `partition`
 
-Key log events to normalize:
+Key normalized log events:
 - price consumed
 - price persisted
 - metrics computed
@@ -161,7 +171,7 @@ Key log events to normalize:
 - sentiment enriched event published
 - sentiment DLQ write
 
-Implementation guidance:
+Testing guidance:
 - Do not assert exact log text in tests.
 - Prefer tests only where a log field is part of a contract, such as `event_id` propagation.
 - Keep log messages short and stable.
@@ -173,7 +183,7 @@ Current event ID shape:
 - alert/summary: `{time}:{symbol}:{window}`
 - enriched news: `news:{source}:{hash}`
 
-Target propagation:
+Current propagation:
 - Kafka `alerts`
 - Kafka `summaries`
 - summary sidecar logs
@@ -185,7 +195,7 @@ Current gap:
 - The `anomalies` table does not currently store `event_id`; it uses `(time, symbol, window_name)` as the primary key.
 - Backend alert responses are reconstructed from DB rows and do not currently include `event_id`.
 
-Recommended approach:
+Current approach:
 - Do not add a DB `event_id` column in the first diagnostics phase.
 - Document that `(time, symbol, window)` is the DB correlation key.
 - Consider adding a generated/reconstructed `event_id` to backend alert responses later if useful.
@@ -193,7 +203,7 @@ Recommended approach:
 ## Freshness Targets
 Freshness thresholds should be explicit so stale data is not confused with service failure.
 
-Initial operational targets:
+Operational targets:
 - prices: `ok` under 15 seconds, `degraded` under 60 seconds, `stale` after 60 seconds
 - metrics: `ok` under 20 seconds, `degraded` under 90 seconds, `stale` after 90 seconds
 - headlines: `ok` under 30 minutes, `degraded` under 2 hours, `stale` after 2 hours
@@ -229,55 +239,56 @@ Structured logging tests:
 
 ## Implementation Phases
 
-### Phase 1: Backend Diagnostics Endpoint
-Add DB helpers and `GET /diagnostics/pipeline`.
+### Phase 1: Backend Diagnostics Endpoint — implemented
+Added DB helpers and `GET /diagnostics/pipeline`.
 
-Deliverables:
+Implemented:
 - diagnostics DB helper functions
-- endpoint payload model or plain typed dict
+- typed diagnostics response construction
 - backend tests for freshness/count payload
 - backend docs update
 
-Why first:
+Why it matters:
 - It is easy to demo.
 - It gives immediate visibility into pipeline state without adding infrastructure.
 - It avoids Kafka inspection complexity.
 
-### Phase 2: Freshness Status Model
-Centralize `ok`/`degraded`/`stale`/`down` status decisions.
+### Phase 2: Freshness Status Model — implemented
+Centralized `ok`/`degraded`/`stale`/`down` status decisions.
 
-Deliverables:
-- small backend helper for age-to-status classification
+Implemented:
+- backend freshness policy and age-to-status classification
 - explicit freshness thresholds
 - tests for boundary behavior
-- optional compact `/health` summary if it stays cheap
+- `/health` kept cheap and separate from diagnostics
 
-### Phase 3: Runtime Metrics Cleanup
-Audit existing runtime counters and standardize names where safe.
+### Phase 3: Runtime Metrics Cleanup — implemented
+Audited runtime counters and standardized names where safe.
 
-Deliverables:
+Implemented:
 - documented metric inventory
 - missing counters added for important failure paths
 - tests for high-value counters
 - no Prometheus format yet
 
-### Phase 4: Structured Log Field Consistency
-Normalize log extras for key pipeline events.
+### Phase 4: Structured Log Field Consistency — implemented
+Normalized log extras for key processor and sidecar events.
 
-Deliverables:
-- consistent `event_id`, `symbol`, `window`, `topic`, `operation`, `duration_ms`, `error`
+Implemented:
+- consistent `event_id`, `symbol`, `window`, `topic`, `consumer_group`, `operation`, `duration_ms`, `error`, `error_type`, `offset`, and `partition` fields where relevant
 - no broad logging rewrite
 - targeted tests only where useful
 
-### Phase 5: Documentation Updates
-Update:
+### Phase 5: Documentation Updates — implemented
+Updated:
+- main `README.md`
 - `docs/backend.md`
 - `docs/processor.md`
 - `docs/architecture.md`
-- main `README.md` if the diagnostics endpoint becomes part of the demo flow
+- this document
 
 ### Later: Prometheus/Grafana Profile
-Out of scope for this plan.
+Out of scope for the current implementation.
 
 Possible later work:
 - Prometheus scrape config
