@@ -1,4 +1,4 @@
-.PHONY: smoke-test migrate-db deploy-processor verify-runtime replay-summaries-dlq
+.PHONY: smoke-test migrate-db deploy-processor verify-runtime replay-summaries-dlq backtest-anomalies
 
 smoke-test:
 	PYTHONPATH=processor/src:. .venv/bin/python -m pytest processor/tests
@@ -15,3 +15,6 @@ verify-runtime:
 
 replay-summaries-dlq:
 	PYTHONPATH=processor/src:. .venv/bin/python scripts/replay_summaries_dlq_topic.py $(ARGS)
+
+backtest-anomalies:
+	PYTHONPATH=. .venv/bin/python scripts/backtest_anomaly_thresholds.py $(ARGS)

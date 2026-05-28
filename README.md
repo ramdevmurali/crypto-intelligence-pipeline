@@ -35,6 +35,7 @@ Related docs:
 - [`docs/backend.md`](docs/backend.md)
 - [`docs/frontend.md`](docs/frontend.md)
 - [`docs/math.md`](docs/math.md)
+- [`docs/backtesting.md`](docs/backtesting.md)
 - [`docs/anomaly_diagnostics.md`](docs/anomaly_diagnostics.md)
 - [`docs/backend_tests.md`](docs/backend_tests.md)
 - [`docs/processor_tests.md`](docs/processor_tests.md)
@@ -50,6 +51,7 @@ Related docs:
 - Sentiment sidecar that enriches headline sentiment without blocking ingest.
 - Dead-letter topics and local DLQ buffer fallback for failed summary messages.
 - Probe, replay, migration, and runtime verification scripts.
+- Offline anomaly threshold backtesting for exported price rows.
 - React dashboard for prices, signals, alerts, headlines, KPIs, and service health.
 
 ## Design choice: lightweight anomaly detection
@@ -58,6 +60,8 @@ The anomaly path intentionally uses streaming math instead of a heavy model in t
 This keeps detection deterministic, low-latency, explainable, and easy to inspect. LLM summarization runs later in the summary sidecar after an alert is emitted, so model latency or failure does not block ingestion, metric computation, or alert publication.
 
 The goal is an explainable anomaly signal inside a resilient real-time pipeline, not a claim of predictive trading accuracy. Thresholds are operational defaults and can be tuned with historical backtesting.
+
+Use [`scripts/backtest_anomaly_thresholds.py`](scripts/backtest_anomaly_thresholds.py) to replay exported price rows through the same rolling metrics and threshold logic. See [`docs/backtesting.md`](docs/backtesting.md) for usage and limitations.
 
 ## Observability
 - `GET /health` stays cheap and only verifies backend DB reachability.
